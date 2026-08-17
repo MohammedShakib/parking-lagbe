@@ -1,5 +1,4 @@
 import Link from "next/link";
-
 import { AuthHeader } from "@/components/auth-header";
 import { getCurrentProfile } from "@/lib/auth/auth";
 

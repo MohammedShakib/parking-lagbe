@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -51,95 +52,78 @@ export function AuthHeader({ profile, currentDashboard = "user" }: AuthHeaderPro
 
   const userLevelIcon =
     profile?.user_level === "diamond"
-      ? "💎"
+      ? "ðŸ’Ž"
       : profile?.user_level === "gold"
-      ? "🏆"
-      : "⭐";
+      ? "ðŸ†"
+      : "â­";
 
   return (
-    <header className="sticky top-0 z-50 bg-black/60 backdrop-blur-md border-b border-white/20">
+    <header className="sticky top-0 z-50 border-b border-white/20 bg-black/60 backdrop-blur-md">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3.5 sm:px-6">
-        {/* Brand Logo matching PHP */}
-        <Link href="/" className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-[#f39c12] rounded-full flex justify-center items-center overflow-hidden shadow-lg shadow-[#f39c12]/30">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="w-6 h-6 text-white"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-              <path d="M9 18V6h4.5a2.5 2.5 0 0 1 0 5H9" />
-            </svg>
-          </div>
-          <div>
-            <h1 className="text-xl font-bold text-white tracking-tight drop-shadow-md">
-              পার্কিং লাগবে ?
-            </h1>
-          </div>
+        <Link href="/" className="flex items-center">
+          <Image
+            src="/brand/parking-lagbe-full-logo-transparent.png"
+            alt="Parking Lagbe"
+            width={1095}
+            height={549}
+            className="h-11 w-auto object-contain sm:h-12 md:h-14"
+            priority
+          />
         </Link>
 
-        {/* Center Nav Links matching PHP */}
-        <nav className="hidden md:flex items-center gap-8 text-sm">
+        <nav className="hidden items-center gap-8 text-sm md:flex">
           <Link
             href="/"
-            className="text-white/90 hover:text-[#f39c12] font-medium transition-colors"
+            className="font-medium text-white/90 transition-colors hover:text-[#f39c12]"
           >
             Home
           </Link>
           <Link
             href="/dashboard"
-            className="text-white/90 hover:text-[#f39c12] font-medium transition-colors"
+            className="font-medium text-white/90 transition-colors hover:text-[#f39c12]"
           >
             Find Parking
           </Link>
           <Link
             href="/business"
-            className="text-white/90 hover:text-[#f39c12] font-medium transition-colors"
+            className="font-medium text-white/90 transition-colors hover:text-[#f39c12]"
           >
             Host Garage
           </Link>
           {profile?.role === "admin" && (
             <Link
               href="/admin"
-              className="text-white/90 hover:text-[#f39c12] font-medium transition-colors"
+              className="font-medium text-white/90 transition-colors hover:text-[#f39c12]"
             >
               Admin Panel
             </Link>
           )}
         </nav>
 
-        {/* Right Actions */}
         <div className="flex items-center gap-3">
           {profile ? (
             <>
-              {/* Switch Portal Button matching PHP */}
               {currentDashboard === "user" ? (
                 <button
                   disabled={isSwitching}
                   onClick={() => handleSwitchDashboard("business")}
-                  className="hidden sm:inline-flex items-center rounded-xl border border-[#f39c12] px-3.5 py-1.5 text-xs font-bold text-white hover:bg-[#f39c12] hover:text-neutral-950 transition shadow-sm"
+                  className="hidden items-center rounded-xl border border-[#f39c12] px-3.5 py-1.5 text-xs font-bold text-white transition hover:bg-[#f39c12] hover:text-neutral-950 shadow-sm sm:inline-flex"
                 >
-                  {isSwitching ? "Switching..." : "Switch To Business 🏢"}
+                  {isSwitching ? "Switching..." : "Switch To Business ðŸ¢"}
                 </button>
               ) : currentDashboard === "business" ? (
                 <button
                   disabled={isSwitching}
                   onClick={() => handleSwitchDashboard("user")}
-                  className="hidden sm:inline-flex items-center rounded-xl border border-[#f39c12] px-3.5 py-1.5 text-xs font-bold text-white hover:bg-[#f39c12] hover:text-neutral-950 transition shadow-sm"
+                  className="hidden items-center rounded-xl border border-[#f39c12] px-3.5 py-1.5 text-xs font-bold text-white transition hover:bg-[#f39c12] hover:text-neutral-950 shadow-sm sm:inline-flex"
                 >
-                  {isSwitching ? "Switching..." : "Switch To Driver 🚗"}
+                  {isSwitching ? "Switching..." : "Switch To Driver ðŸš—"}
                 </button>
               ) : null}
 
-              {/* Points Badge matching PHP */}
               <Link
                 href="/dashboard"
-                className="flex items-center gap-1.5 bg-[#f39c12]/20 backdrop-blur-sm px-3 py-1.5 rounded-full border border-[#f39c12]/40 hover:bg-[#f39c12]/30 transition cursor-pointer"
+                className="flex cursor-pointer items-center gap-1.5 rounded-full border border-[#f39c12]/40 bg-[#f39c12]/20 px-3 py-1.5 backdrop-blur-sm transition hover:bg-[#f39c12]/30"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -149,45 +133,46 @@ export function AuthHeader({ profile, currentDashboard = "user" }: AuthHeaderPro
                 >
                   <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" />
                 </svg>
-                <span className="text-[#f39c12] font-bold text-xs">
+                <span className="text-xs font-bold text-[#f39c12]">
                   {profile.points.toLocaleString()} PTS
                 </span>
               </Link>
 
-              {/* Profile Avatar Dropdown matching PHP */}
               <div className="relative">
                 <button
                   onClick={() => setShowDropdown(!showDropdown)}
-                  className="w-9 h-9 rounded-full bg-[#f39c12]/20 border-2 border-[#f39c12] overflow-hidden flex items-center justify-center cursor-pointer hover:scale-105 transition"
+                  className="flex h-9 w-9 cursor-pointer items-center justify-center overflow-hidden rounded-full border-2 border-[#f39c12] bg-[#f39c12]/20 transition hover:scale-105"
                 >
                   <span className="text-sm font-bold text-[#f39c12]">{firstLetter}</span>
                 </button>
 
                 {showDropdown && (
-                  <div className="absolute right-0 mt-2 w-72 rounded-2xl border border-neutral-700 bg-neutral-900 shadow-2xl p-0 overflow-hidden z-50 animate-fadeIn">
-                    {/* Header in dropdown matching PHP */}
-                    <div className="p-4 bg-gradient-to-r from-[#f39c12]/20 to-[#f39c12]/5 border-b border-neutral-800 flex items-center gap-3">
-                      <div className="w-11 h-11 rounded-full bg-[#f39c12]/20 border-2 border-[#f39c12] flex items-center justify-center flex-shrink-0">
+                  <div className="absolute right-0 z-50 mt-2 w-72 overflow-hidden rounded-2xl border border-neutral-700 bg-neutral-900 p-0 shadow-2xl animate-fadeIn">
+                    <div className="flex items-center gap-3 border-b border-neutral-800 bg-gradient-to-r from-[#f39c12]/20 to-[#f39c12]/5 p-4">
+                      <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full border-2 border-[#f39c12] bg-[#f39c12]/20">
                         <span className="text-base font-bold text-[#f39c12]">{firstLetter}</span>
                       </div>
                       <div className="min-w-0">
-                        <div className="font-bold text-white text-xs truncate flex items-center gap-1">
-                          <span>{profile.first_name} {profile.last_name}</span>
+                        <div className="flex items-center gap-1 truncate text-xs font-bold text-white">
+                          <span>
+                            {profile.first_name} {profile.last_name}
+                          </span>
                           <span title={`${profile.user_level} VIP`}>{userLevelIcon}</span>
                         </div>
-                        <div className="text-[11px] text-neutral-400 truncate">@{profile.username}</div>
-                        <div className="text-[10px] text-[#f39c12] font-semibold mt-0.5">
+                        <div className="truncate text-[11px] text-neutral-400">
+                          @{profile.username}
+                        </div>
+                        <div className="mt-0.5 text-[10px] font-semibold text-[#f39c12]">
                           {profile.user_level} VIP Tier ({profile.points} pts)
                         </div>
                       </div>
                     </div>
 
-                    {/* Navigation Menu in dropdown matching PHP */}
-                    <div className="p-2 text-xs space-y-1 text-neutral-300">
+                    <div className="space-y-1 p-2 text-xs text-neutral-300">
                       <Link
                         href="/dashboard"
                         onClick={() => setShowDropdown(false)}
-                        className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-neutral-800 hover:text-white transition"
+                        className="flex items-center gap-2.5 rounded-xl px-3 py-2 transition hover:bg-neutral-800 hover:text-white"
                       >
                         <span>🎫</span>
                         <span>My Bookings</span>
@@ -195,7 +180,7 @@ export function AuthHeader({ profile, currentDashboard = "user" }: AuthHeaderPro
                       <Link
                         href="/dashboard"
                         onClick={() => setShowDropdown(false)}
-                        className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-neutral-800 hover:text-white transition"
+                        className="flex items-center gap-2.5 rounded-xl px-3 py-2 transition hover:bg-neutral-800 hover:text-white"
                       >
                         <span>🚗</span>
                         <span>My Vehicles</span>
@@ -203,7 +188,7 @@ export function AuthHeader({ profile, currentDashboard = "user" }: AuthHeaderPro
                       <Link
                         href="/dashboard"
                         onClick={() => setShowDropdown(false)}
-                        className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-neutral-800 hover:text-white transition"
+                        className="flex items-center gap-2.5 rounded-xl px-3 py-2 transition hover:bg-neutral-800 hover:text-white"
                       >
                         <span>💳</span>
                         <span>Payment History & Invoices</span>
@@ -211,7 +196,7 @@ export function AuthHeader({ profile, currentDashboard = "user" }: AuthHeaderPro
                       <Link
                         href="/business"
                         onClick={() => setShowDropdown(false)}
-                        className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-neutral-800 hover:text-white transition"
+                        className="flex items-center gap-2.5 rounded-xl px-3 py-2 transition hover:bg-neutral-800 hover:text-white"
                       >
                         <span>🏢</span>
                         <span>Business Dashboard</span>
@@ -220,7 +205,7 @@ export function AuthHeader({ profile, currentDashboard = "user" }: AuthHeaderPro
                         <Link
                           href="/admin"
                           onClick={() => setShowDropdown(false)}
-                          className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-neutral-800 hover:text-white transition"
+                          className="flex items-center gap-2.5 rounded-xl px-3 py-2 transition hover:bg-neutral-800 hover:text-white"
                         >
                           <span>🛡️</span>
                           <span>Admin Console</span>
@@ -232,7 +217,7 @@ export function AuthHeader({ profile, currentDashboard = "user" }: AuthHeaderPro
                       <button
                         disabled={isLoggingOut}
                         onClick={handleLogout}
-                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-red-400 hover:bg-red-500/10 transition text-left"
+                        className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-red-400 transition hover:bg-red-500/10"
                       >
                         <span>🚪</span>
                         <span>{isLoggingOut ? "Logging out..." : "Logout"}</span>
@@ -246,13 +231,13 @@ export function AuthHeader({ profile, currentDashboard = "user" }: AuthHeaderPro
             <div className="flex items-center gap-2">
               <Link
                 href="/login"
-                className="rounded-xl border border-white/20 bg-black/40 px-4 py-2 text-xs font-bold text-white hover:border-[#f39c12] hover:text-[#f39c12] transition"
+                className="rounded-xl border border-white/20 bg-black/40 px-4 py-2 text-xs font-bold text-white transition hover:border-[#f39c12] hover:text-[#f39c12]"
               >
                 Login
               </Link>
               <Link
                 href="/register"
-                className="rounded-xl bg-[#f39c12] px-4 py-2 text-xs font-bold text-white hover:bg-[#e67e22] shadow-lg shadow-[#f39c12]/20 transition"
+                className="rounded-xl bg-[#f39c12] px-4 py-2 text-xs font-bold text-white transition shadow-lg shadow-[#f39c12]/20 hover:bg-[#e67e22]"
               >
                 Register
               </Link>
