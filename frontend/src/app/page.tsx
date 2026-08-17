@@ -99,35 +99,53 @@ export default async function HomePage() {
       <AuthHeader profile={profile} currentDashboard="user" />
 
       {/* Hero Section matching legacy home.php in White Theme */}
-      <section className="relative overflow-hidden border-b border-slate-200 bg-white py-16 sm:py-24">
-        <div className="container mx-auto px-4 text-center max-w-4xl relative z-10">
-          <div className="inline-flex items-center gap-2 rounded-full border border-amber-300 bg-amber-50 px-4 py-1.5 text-xs font-bold text-amber-900 shadow-sm mb-6">
-            <span>✨</span>
-            <span>Real-time Smart Parking Network in Bangladesh</span>
+      <section className="relative overflow-hidden border-b border-slate-200 bg-white">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(243,156,18,0.09),transparent_32%),radial-gradient(circle_at_bottom_left,rgba(37,99,235,0.07),transparent_30%)]" />
+        <div className="container mx-auto relative z-10 grid max-w-7xl items-center gap-12 px-4 py-16 sm:py-20 lg:grid-cols-[1.05fr_0.95fr] lg:py-24">
+          <div className="max-w-2xl text-center lg:text-left">
+            <div className="inline-flex items-center gap-2 rounded-full border border-amber-300 bg-amber-50 px-4 py-1.5 text-xs font-bold text-amber-900 shadow-sm mb-6">
+              <span>New</span>
+              <span>Real-time Smart Parking Network in Bangladesh</span>
+            </div>
+
+            <h1 className="text-4xl font-black leading-tight tracking-tight text-slate-900 sm:text-5xl lg:text-6xl">
+              Find and Reserve Parking Spaces in{" "}
+              <span className="text-[#f39c12]">Real-Time</span>
+            </h1>
+
+            <p className="mx-auto mb-8 max-w-2xl text-base leading-relaxed text-slate-600 sm:text-lg lg:mx-0">
+              Discover secure, CCTV-monitored parking lots across Dhaka. Check live spot
+              availability, book in advance, and pay seamlessly with bKash, Nagad, or Loyalty
+              Points.
+            </p>
+
+            <div className="flex flex-wrap items-center justify-center gap-4 lg:justify-start">
+              <Link
+                href="/dashboard"
+                className="rounded-2xl bg-[#f39c12] px-8 py-4 text-sm font-bold text-white shadow-lg shadow-[#f39c12]/25 transition hover:scale-105 hover:bg-[#e67e22]"
+              >
+                Find Parking Near You
+              </Link>
+
+              <Link
+                href="/business"
+                className="rounded-2xl border-2 border-slate-300 bg-white px-7 py-4 text-sm font-bold text-slate-800 shadow-sm transition hover:border-[#f39c12] hover:text-[#d97706]"
+              >
+                Host Your Parking Space
+              </Link>
+            </div>
           </div>
 
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-slate-900 tracking-tight leading-tight mb-4">
-            Find and Reserve Parking Spaces in <span className="text-[#f39c12]">Real-Time</span>
-          </h1>
-
-          <p className="text-base sm:text-lg text-slate-600 max-w-2xl mx-auto mb-8 leading-relaxed">
-            Discover secure, CCTV-monitored parking lots across Dhaka. Check live spot availability, book in advance, and pay seamlessly with bKash, Nagad, or Loyalty Points.
-          </p>
-
-          <div className="flex flex-wrap items-center justify-center gap-4">
-            <Link
-              href="/dashboard"
-              className="rounded-2xl bg-[#f39c12] hover:bg-[#e67e22] text-white px-8 py-4 text-sm font-bold shadow-lg shadow-[#f39c12]/25 transition hover:scale-105"
-            >
-              🚗 Find Parking Near You
-            </Link>
-
-            <Link
-              href="/business"
-              className="rounded-2xl border-2 border-slate-300 bg-white hover:border-[#f39c12] hover:text-[#d97706] text-slate-800 px-7 py-4 text-sm font-bold shadow-sm transition"
-            >
-              🏢 Host Your Parking Space
-            </Link>
+          <div className="relative flex justify-center lg:justify-end">
+            <div className="absolute inset-0 -z-10 rounded-[2rem] bg-gradient-to-br from-[#f39c12]/10 via-transparent to-sky-500/10 blur-3xl" />
+            <Image
+              src="/brand/parking-lagbe-hero-mockup-transparent.png"
+              alt="Parking Lagbe hero mockup"
+              width={1448}
+              height={1086}
+              priority
+              className="h-auto w-full max-w-[680px] object-contain drop-shadow-[0_24px_60px_rgba(15,23,42,0.12)]"
+            />
           </div>
         </div>
       </section>
