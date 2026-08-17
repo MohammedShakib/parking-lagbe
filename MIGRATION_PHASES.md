@@ -6,7 +6,7 @@ This file is the source of truth for phase tracking. Each completed phase should
 
 - [x] Phase 1: Repository hygiene, legacy audit, and Supabase schema mapping.
 - [x] Phase 2: Bootstrap Next.js/Supabase application shell.
-- [ ] Phase 3: Implement authentication and user/role model with Supabase Auth.
+- [x] Phase 3: Implement authentication and user/role model with Supabase Auth.
 - [ ] Phase 4: Migrate regular user flows: home/search, vehicles, bookings, payments history.
 - [ ] Phase 5: Migrate business owner dashboard: garages, schedules, booking management, income.
 - [ ] Phase 6: Migrate admin dashboard: verification, users, garages, payments, commissions, analytics.
@@ -38,3 +38,15 @@ Completed:
 - Added Supabase env example and client helper modules.
 - Added route shells for user, business, admin, login, and health check.
 - Added `backend/` notes for API/service placement.
+
+## Phase 3 Notes
+
+Completed:
+
+- Created `supabase/migrations/0002_auth_and_roles.sql` introducing Row Level Security (RLS), role resolution functions (`get_user_role`, `is_admin`), login audit RPC (`record_login_history`), and dashboard switching RPC.
+- Generated and mapped complete TypeScript types in `frontend/src/lib/supabase/database.types.ts`.
+- Implemented `@supabase/ssr` server and browser client wrappers with typed database generics.
+- Added server auth helper layer (`frontend/src/lib/auth/auth.ts`) for profile extraction, session management, role resolution, and server actions.
+- Built Next.js edge middleware (`frontend/src/middleware.ts`) handling automated session refresh, route protection for `/dashboard`, `/business`, and `/admin`, and intelligent redirection.
+- Added API route handlers for login (`/api/auth/login`), registration (`/api/auth/register`), logout (`/api/auth/logout`), auth callbacks (`/api/auth/callback`), and dashboard switching (`/api/auth/switch-dashboard`).
+- Built modern, responsive UI pages for `/login` and `/register` (supporting Driver and Garage Host workflows), and integrated `AuthHeader` into `/dashboard`, `/business`, and `/admin`.

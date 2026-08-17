@@ -46,6 +46,9 @@ export default function Home() {
             <Link className="rounded border border-neutral-200 px-3 py-2 hover:bg-neutral-50" href="/login">
               Login
             </Link>
+            <Link className="rounded border border-neutral-200 px-3 py-2 hover:bg-neutral-50" href="/register">
+              Register
+            </Link>
             <Link className="rounded bg-neutral-950 px-3 py-2 text-white hover:bg-neutral-800" href="/dashboard">
               Open app
             </Link>
