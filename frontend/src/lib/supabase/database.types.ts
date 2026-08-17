@@ -489,6 +489,249 @@ export interface Database {
         };
         Relationships: [];
       };
+      ratings: {
+        Row: {
+          id: number;
+          booking_id: number;
+          garage_id: string;
+          garage_name: string | null;
+          rater_username: string;
+          garage_owner_username: string | null;
+          rating: number;
+          review_text: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: number;
+          booking_id: number;
+          garage_id: string;
+          garage_name?: string | null;
+          rater_username: string;
+          garage_owner_username?: string | null;
+          rating: number;
+          review_text?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: number;
+          booking_id?: number;
+          garage_id?: string;
+          garage_name?: string | null;
+          rater_username?: string;
+          garage_owner_username?: string | null;
+          rating?: number;
+          review_text?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      garage_ratings_summary: {
+        Row: {
+          garage_id: string;
+          garage_name: string | null;
+          total_ratings: number;
+          average_rating: number;
+          five_star: number;
+          four_star: number;
+          three_star: number;
+          two_star: number;
+          one_star: number;
+          last_updated: string;
+        };
+        Insert: {
+          garage_id: string;
+          garage_name?: string | null;
+          total_ratings?: number;
+          average_rating?: number;
+          five_star?: number;
+          four_star?: number;
+          three_star?: number;
+          two_star?: number;
+          one_star?: number;
+          last_updated?: string;
+        };
+        Update: {
+          garage_id?: string;
+          garage_name?: string | null;
+          total_ratings?: number;
+          average_rating?: number;
+          five_star?: number;
+          four_star?: number;
+          three_star?: number;
+          two_star?: number;
+          one_star?: number;
+          last_updated?: string;
+        };
+        Relationships: [];
+      };
+      profit_tracking: {
+        Row: {
+          id: number;
+          payment_id: number;
+          booking_id: number;
+          owner_id: string | null;
+          garage_id: string | null;
+          garage_name: string | null;
+          total_amount: number;
+          commission_rate: number;
+          owner_profit: number;
+          platform_profit: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: number;
+          payment_id: number;
+          booking_id: number;
+          owner_id?: string | null;
+          garage_id?: string | null;
+          garage_name?: string | null;
+          total_amount?: number;
+          commission_rate?: number;
+          owner_profit?: number;
+          platform_profit?: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: number;
+          payment_id?: number;
+          booking_id?: number;
+          owner_id?: string | null;
+          garage_id?: string | null;
+          garage_name?: string | null;
+          total_amount?: number;
+          commission_rate?: number;
+          owner_profit?: number;
+          platform_profit?: number;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      owner_commissions: {
+        Row: {
+          id: number;
+          owner_id: string;
+          owner_type: OwnerType;
+          rate: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: number;
+          owner_id: string;
+          owner_type: OwnerType;
+          rate?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: number;
+          owner_id?: string;
+          owner_type?: OwnerType;
+          rate?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      verification_requests: {
+        Row: {
+          id: number;
+          username: string;
+          request_type: string;
+          overall_status: VerificationStatus;
+          requested_at: string;
+          completed_at: string | null;
+          admin_notes: string | null;
+        };
+        Insert: {
+          id?: number;
+          username: string;
+          request_type?: string;
+          overall_status?: VerificationStatus;
+          requested_at?: string;
+          completed_at?: string | null;
+          admin_notes?: string | null;
+        };
+        Update: {
+          id?: number;
+          username?: string;
+          request_type?: string;
+          overall_status?: VerificationStatus;
+          requested_at?: string;
+          completed_at?: string | null;
+          admin_notes?: string | null;
+        };
+        Relationships: [];
+      };
+      verification_documents: {
+        Row: {
+          id: number;
+          username: string;
+          document_type: string;
+          document_number: string | null;
+          storage_bucket: string | null;
+          storage_path: string | null;
+          original_filename: string | null;
+          file_size: number | null;
+          mime_type: string | null;
+          status: VerificationStatus;
+          submitted_at: string;
+          reviewed_at: string | null;
+          reviewed_by: string | null;
+          rejection_reason: string | null;
+        };
+        Insert: {
+          id?: number;
+          username: string;
+          document_type: string;
+          document_number?: string | null;
+          storage_bucket?: string | null;
+          storage_path?: string | null;
+          original_filename?: string | null;
+          file_size?: number | null;
+          mime_type?: string | null;
+          status?: VerificationStatus;
+          submitted_at?: string;
+          reviewed_at?: string | null;
+          reviewed_by?: string | null;
+          rejection_reason?: string | null;
+        };
+        Update: {
+          id?: number;
+          username?: string;
+          document_type?: string;
+          document_number?: string | null;
+          storage_bucket?: string | null;
+          storage_path?: string | null;
+          original_filename?: string | null;
+          file_size?: number | null;
+          mime_type?: string | null;
+          status?: VerificationStatus;
+          submitted_at?: string;
+          reviewed_at?: string | null;
+          reviewed_by?: string | null;
+          rejection_reason?: string | null;
+        };
+        Relationships: [];
+      };
+      user_notification_checks: {
+        Row: {
+          username: string;
+          last_check_time: string;
+        };
+        Insert: {
+          username: string;
+          last_check_time?: string;
+        };
+        Update: {
+          username?: string;
+          last_check_time?: string;
+        };
+        Relationships: [];
+      };
       user_login_history: {
         Row: {
           id: number;
@@ -533,6 +776,44 @@ export interface Database {
       switch_default_dashboard: {
         Args: { p_dashboard: DashboardType };
         Returns: void;
+      };
+      create_booking_order: {
+        Args: {
+          p_username: string;
+          p_garage_id: string;
+          p_license_plate: string;
+          p_booking_date: string;
+          p_booking_time: string;
+          p_duration: number;
+          p_paid_with_points?: boolean;
+          p_points_used?: number;
+        };
+        Returns: Json;
+      };
+      process_booking_payment: {
+        Args: {
+          p_booking_id: number;
+          p_payment_method: PaymentMethod;
+          p_transaction_id?: string | null;
+          p_amount?: number;
+          p_points_used?: number;
+        };
+        Returns: Json;
+      };
+      cancel_booking_order: {
+        Args: {
+          p_booking_id: number;
+        };
+        Returns: Json;
+      };
+      submit_garage_rating: {
+        Args: {
+          p_booking_id: number;
+          p_garage_id: string;
+          p_rating: number;
+          p_review_text?: string | null;
+        };
+        Returns: Json;
       };
     };
     Enums: {
