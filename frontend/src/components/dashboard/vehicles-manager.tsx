@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 interface Vehicle {
+  id: number;
   license_plate: string;
   vehicle_type: string;
   make: string | null;
@@ -13,58 +14,86 @@ interface Vehicle {
 export function VehiclesManager() {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
 
-  // Form State
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [plate, setPlate] = useState("");
-  const [type, setType] = useState("Car");
+  // Form State matching add_vehicle.php
+  const [licensePlate, setLicensePlate] = useState("");
+  const [vehicleType, setVehicleType] = useState("car");
   const [make, setMake] = useState("");
   const [model, setModel] = useState("");
   const [color, setColor] = useState("");
-
-  const [submitting, setSubmitting] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const fetchVehicles = async () => {
     try {
+      setLoading(true);
       const res = await fetch("/api/vehicles");
       const data = await res.json();
       if (data.vehicles) {
         setVehicles(data.vehicles);
       }
     } catch {
-      // Handle error
+      // Handled
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    let ignore = false;
-    async function load() {
-      try {
-        const res = await fetch("/api/vehicles");
-        const data = await res.json();
-        if (!ignore && data.vehicles) {
-          setVehicles(data.vehicles);
-        }
-      } catch {
-        // Handle error
-      } finally {
-        if (!ignore) setLoading(false);
-      }
-    }
-    load();
-    return () => {
-      ignore = true;
-    };
+    fetchVehicles();
   }, []);
 
-  const handleAddVehicle = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!plate.trim()) return;
+  const handleOpenAddModal = () => {
+    setEditingVehicle(null);
+    setLicensePlate("");
+    setVehicleType("car");
+    setMake("");
+    setModel("");
+    setColor("");
+    setError(null);
+    setIsModalOpen(true);
+  };
 
-    setSubmitting(true);
+  const handleOpenEditModal = (vehicle: Vehicle) => {
+    setEditingVehicle(vehicle);
+    setLicensePlate(vehicle.license_plate);
+    setVehicleType(vehicle.vehicle_type || "car");
+    setMake(vehicle.make || "");
+    setModel(vehicle.model || "");
+    setColor(vehicle.color || "");
+    setError(null);
+    setIsModalOpen(true);
+  };
+
+  const handleDeleteVehicle = async (plate: string) => {
+    if (!confirm(`Are you sure you want to delete vehicle with license plate ${plate}?`)) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/vehicles?plate=${encodeURIComponent(plate)}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) {
+        const d = await res.json();
+        throw new Error(d.error || "Failed to delete vehicle");
+      }
+
+      setSuccessMessage("Vehicle successfully deleted!");
+      setTimeout(() => setSuccessMessage(null), 4000);
+      fetchVehicles();
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : "Failed to delete");
+    }
+  };
+
+  const handleSaveVehicle = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
     setError(null);
 
     try {
@@ -72,239 +101,269 @@ export function VehiclesManager() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          licensePlate: plate.trim().toUpperCase(),
-          vehicleType: type,
-          make: make.trim() || null,
-          model: model.trim() || null,
-          color: color.trim() || null,
+          licensePlate,
+          vehicleType,
+          make,
+          model,
+          color,
         }),
       });
 
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error || "Failed to add vehicle");
+        throw new Error(data.error || "Failed to save vehicle");
       }
 
-      setShowAddModal(false);
-      setPlate("");
-      setMake("");
-      setModel("");
-      setColor("");
+      setIsModalOpen(false);
+      setSuccessMessage(editingVehicle ? "Vehicle updated successfully!" : "New vehicle registered successfully!");
+      setTimeout(() => setSuccessMessage(null), 4000);
       fetchVehicles();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Error adding vehicle";
-      setError(msg);
+      setError(err instanceof Error ? err.message : "Failed to save vehicle");
     } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const handleDeleteVehicle = async (licensePlate: string) => {
-    if (!confirm(`Are you sure you want to remove vehicle ${licensePlate}?`)) return;
-
-    try {
-      const res = await fetch(`/api/vehicles?plate=${encodeURIComponent(licensePlate)}`, {
-        method: "DELETE",
-      });
-      if (res.ok) {
-        setVehicles((prev) => prev.filter((v) => v.license_plate !== licensePlate));
-      }
-    } catch {
-      // Handle error
-    }
-  };
-
-  const getVehicleIcon = (vehicleType: string) => {
-    switch (vehicleType.toLowerCase()) {
-      case "motorcycle":
-      case "bike":
-        return "🏍️";
-      case "microbus":
-        return "🚐";
-      default:
-        return "🚗";
+      setSaving(false);
     }
   };
 
   return (
-    <div>
-      {/* Header with Add Button */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6">
+    <div className="space-y-6">
+      {/* Header matching myvehicles.php lines 376-387 */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-xl font-bold text-white">Registered Vehicles</h2>
-          <p className="text-xs text-neutral-400">
-            Add your car or motorcycle license plates for quick 1-click spot reservations.
-          </p>
+          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-1">My Vehicles</h2>
+          <p className="text-white/80 text-xs">Manage your vehicles for parking reservations</p>
         </div>
+
         <button
-          onClick={() => setShowAddModal(true)}
-          className="rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 px-4 py-2.5 text-xs font-bold text-neutral-950 shadow-lg shadow-emerald-500/20 hover:opacity-95"
+          onClick={handleOpenAddModal}
+          className="rounded-xl bg-[#f39c12] hover:bg-[#e67e22] text-white px-5 py-2.5 text-xs font-bold transition shadow-lg shadow-[#f39c12]/25 flex items-center gap-2"
         >
-          + Add New Vehicle
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-4 w-4"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+          Add New Vehicle
         </button>
       </div>
 
-      {/* Vehicles Grid */}
+      {/* Success Alert matching myvehicles.php line 390 */}
+      {successMessage && (
+        <div className="rounded-xl bg-emerald-500/20 border border-emerald-500/40 p-4 text-xs font-semibold text-emerald-300 flex items-center gap-2">
+          <span>✓</span>
+          <span>{successMessage}</span>
+        </div>
+      )}
+
+      {/* Vehicles Grid matching myvehicles.php lines 405-455 */}
       {loading ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-36 animate-pulse rounded-2xl border border-neutral-800 bg-neutral-900/50" />
+            <div key={i} className="h-64 animate-pulse rounded-xl bg-black/40 border border-white/10" />
           ))}
         </div>
       ) : vehicles.length === 0 ? (
-        <div className="rounded-2xl border border-neutral-800 bg-neutral-900/40 p-12 text-center">
-          <div className="text-4xl mb-3">🚗</div>
-          <h3 className="text-base font-bold text-white">No vehicles added yet</h3>
-          <p className="mt-1 text-xs text-neutral-400">
-            Register your vehicle license plates to reserve parking spaces seamlessly.
-          </p>
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="mt-4 rounded-xl bg-emerald-500 px-4 py-2 text-xs font-bold text-neutral-950 hover:bg-emerald-400"
+        <div className="bg-black/40 backdrop-blur-md rounded-2xl border border-white/15 p-12 text-center shadow-xl">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-16 w-16 mx-auto text-white/30 mb-4"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
           >
-            Add Your First Vehicle
+            <circle cx="12" cy="12" r="10" />
+            <line x1="8" y1="12" x2="16" y2="12" />
+          </svg>
+          <h3 className="text-white text-lg font-bold mb-2">No Vehicles Found</h3>
+          <p className="text-white/70 text-xs mb-6">You haven&apos;t added any vehicles to your account yet.</p>
+          <button
+            onClick={handleOpenAddModal}
+            className="rounded-xl bg-[#f39c12] hover:bg-[#e67e22] text-white px-5 py-2.5 text-xs font-bold transition shadow-lg shadow-[#f39c12]/20"
+          >
+            + Add Your First Vehicle
           </button>
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {vehicles.map((v) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {vehicles.map((vehicle) => (
             <div
-              key={v.license_plate}
-              className="relative flex flex-col justify-between rounded-2xl border border-neutral-800 bg-neutral-900/60 p-5 backdrop-blur-xl transition hover:border-neutral-700"
+              key={vehicle.license_plate}
+              className="bg-black/50 backdrop-blur-md rounded-2xl border border-white/15 p-6 shadow-xl hover:border-[#f39c12]/50 transition-all flex flex-col justify-between"
             >
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-neutral-950 border border-neutral-800 text-2xl">
-                    {getVehicleIcon(v.vehicle_type)}
+              <div>
+                <div className="flex justify-between items-start mb-4">
+                  <div className="w-14 h-14 rounded-full bg-[#f39c12]/20 border-2 border-[#f39c12] flex items-center justify-center">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-7 w-7 text-[#f39c12]"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.5 2.8C1.4 11.3 1 12.1 1 13v3c0 .6.4 1 1 1h2" />
+                      <circle cx="7" cy="17" r="2" />
+                      <circle cx="17" cy="17" r="2" />
+                    </svg>
                   </div>
-                  <div>
-                    <span className="rounded bg-neutral-800 px-2 py-0.5 text-[10px] font-semibold text-neutral-300">
-                      {v.vehicle_type}
-                    </span>
-                    <h3 className="text-base font-black text-white tracking-wider mt-1">
-                      {v.license_plate}
-                    </h3>
-                  </div>
+
+                  <span className="rounded-full bg-white/10 px-2.5 py-0.5 text-[10px] uppercase font-bold text-white/80 border border-white/10">
+                    {vehicle.vehicle_type || "Car"}
+                  </span>
                 </div>
 
-                <button
-                  onClick={() => handleDeleteVehicle(v.license_plate)}
-                  className="text-neutral-500 hover:text-red-400 text-xs p-1"
-                  title="Remove vehicle"
-                >
-                  🗑️
-                </button>
+                <h3 className="text-white text-lg font-bold mb-1">
+                  {vehicle.make || "Vehicle"} {vehicle.model || ""}
+                </h3>
+                <p className="text-white/70 text-xs mb-4 capitalize">
+                  {vehicle.vehicle_type || "Car"} • {vehicle.color || "Standard Color"}
+                </p>
+
+                {/* License Plate Banner matching myvehicles.php line 443 */}
+                <div className="bg-black/60 rounded-xl p-3 text-center mb-5 border border-white/10">
+                  <p className="text-white/60 text-[10px] uppercase tracking-wider mb-0.5">License Plate</p>
+                  <p className="text-white text-base font-bold tracking-wider font-mono">
+                    {vehicle.license_plate}
+                  </p>
+                </div>
               </div>
 
-              <div className="mt-4 flex items-center justify-between border-t border-neutral-800/80 pt-3 text-xs text-neutral-400">
-                <span>
-                  {v.make || "Standard"} {v.model || ""}
-                </span>
-                {v.color && (
-                  <span className="flex items-center gap-1.5">
-                    <span
-                      className="h-2.5 w-2.5 rounded-full border border-neutral-700"
-                      style={{ backgroundColor: v.color.toLowerCase() }}
-                    />
-                    <span className="capitalize">{v.color}</span>
-                  </span>
-                )}
+              {/* Action Buttons matching myvehicles.php line 448 */}
+              <div className="flex gap-2 pt-2 border-t border-white/10">
+                <button
+                  onClick={() => handleOpenEditModal(vehicle)}
+                  className="flex-1 rounded-xl bg-[#f39c12] hover:bg-[#e67e22] text-white text-center text-xs font-bold py-2.5 transition shadow"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => handleDeleteVehicle(vehicle.license_plate)}
+                  className="flex-1 rounded-xl bg-white/10 hover:bg-red-500/20 hover:text-red-300 text-white text-center text-xs font-bold py-2.5 transition border border-white/10"
+                >
+                  Delete
+                </button>
               </div>
             </div>
           ))}
         </div>
       )}
 
-      {/* Add Vehicle Modal */}
-      {showAddModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
-          <div className="relative w-full max-w-md rounded-2xl border border-neutral-800 bg-neutral-900 p-6 shadow-2xl">
-            <button
-              onClick={() => setShowAddModal(false)}
-              className="absolute right-4 top-4 rounded-full p-2 text-neutral-400 hover:bg-neutral-800 hover:text-white"
-            >
-              ✕
-            </button>
-
-            <h3 className="text-lg font-bold text-white mb-1">Add Vehicle</h3>
-            <p className="text-xs text-neutral-400 mb-4">Enter your vehicle details.</p>
+      {/* Add / Edit Vehicle Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fadeIn">
+          <div className="w-full max-w-md bg-neutral-900 rounded-2xl border border-white/20 p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-white/10 pb-3">
+              <h3 className="text-base font-bold text-white">
+                {editingVehicle ? "Edit Vehicle Details" : "Add New Vehicle"}
+              </h3>
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="text-white/60 hover:text-white text-lg"
+              >
+                ✕
+              </button>
+            </div>
 
             {error && (
-              <div className="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-xs text-red-300">
-                {error}
+              <div className="rounded-xl border border-red-500/40 bg-red-500/10 p-3 text-xs text-red-300">
+                ⚠️ {error}
               </div>
             )}
 
-            <form onSubmit={handleAddVehicle} className="space-y-3">
+            <form onSubmit={handleSaveVehicle} className="space-y-3 text-xs">
               <div>
-                <label className="block text-xs font-medium text-neutral-400 mb-1">
-                  License Plate Number
+                <label className="block text-white/80 font-semibold mb-1">
+                  License Plate Number *
                 </label>
                 <input
                   type="text"
                   required
-                  value={plate}
-                  onChange={(e) => setPlate(e.target.value)}
-                  placeholder="e.g. DHAKA-METRO-GA-11-2233"
-                  className="w-full rounded-xl border border-neutral-800 bg-neutral-950 px-3.5 py-2.5 text-xs text-white uppercase outline-none focus:border-emerald-500"
+                  disabled={Boolean(editingVehicle)}
+                  value={licensePlate}
+                  onChange={(e) => setLicensePlate(e.target.value)}
+                  placeholder="e.g. DHA-D-12-4545"
+                  className="w-full rounded-xl border border-white/15 bg-black/50 px-3.5 py-2.5 text-white placeholder-white/40 outline-none focus:border-[#f39c12] disabled:opacity-50"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-neutral-400 mb-1">Vehicle Type</label>
-                  <select
-                    value={type}
-                    onChange={(e) => setType(e.target.value)}
-                    className="w-full rounded-xl border border-neutral-800 bg-neutral-950 px-3 py-2.5 text-xs text-white outline-none focus:border-emerald-500"
-                  >
-                    <option value="Car">Car (Sedan/SUV)</option>
-                    <option value="Motorcycle">Motorcycle</option>
-                    <option value="Microbus">Microbus</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-neutral-400 mb-1">Color</label>
+                  <label className="block text-white/80 font-semibold mb-1">Make (Brand)</label>
                   <input
                     type="text"
-                    value={color}
-                    onChange={(e) => setColor(e.target.value)}
-                    placeholder="e.g. Silver / White"
-                    className="w-full rounded-xl border border-neutral-800 bg-neutral-950 px-3 py-2.5 text-xs text-white outline-none focus:border-emerald-500"
+                    value={make}
+                    onChange={(e) => setMake(e.target.value)}
+                    placeholder="e.g. Toyota"
+                    className="w-full rounded-xl border border-white/15 bg-black/50 px-3.5 py-2.5 text-white placeholder-white/40 outline-none focus:border-[#f39c12]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-white/80 font-semibold mb-1">Model</label>
+                  <input
+                    type="text"
+                    value={model}
+                    onChange={(e) => setModel(e.target.value)}
+                    placeholder="e.g. Corolla / Premio"
+                    className="w-full rounded-xl border border-white/15 bg-black/50 px-3.5 py-2.5 text-white placeholder-white/40 outline-none focus:border-[#f39c12]"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-neutral-400 mb-1">Make (Brand)</label>
-                  <input
-                    type="text"
-                    value={make}
-                    onChange={(e) => setMake(e.target.value)}
-                    placeholder="e.g. Toyota"
-                    className="w-full rounded-xl border border-neutral-800 bg-neutral-950 px-3 py-2.5 text-xs text-white outline-none focus:border-emerald-500"
-                  />
+                  <label className="block text-white/80 font-semibold mb-1">Vehicle Type</label>
+                  <select
+                    value={vehicleType}
+                    onChange={(e) => setVehicleType(e.target.value)}
+                    className="w-full rounded-xl border border-white/15 bg-black/50 px-3.5 py-2.5 text-white outline-none focus:border-[#f39c12]"
+                  >
+                    <option value="car">Car / Sedan</option>
+                    <option value="suv">SUV / Jeep</option>
+                    <option value="microbus">Microbus / Van</option>
+                    <option value="bike">Motorcycle / Bike</option>
+                  </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-neutral-400 mb-1">Model</label>
+                  <label className="block text-white/80 font-semibold mb-1">Color</label>
                   <input
                     type="text"
-                    value={model}
-                    onChange={(e) => setModel(e.target.value)}
-                    placeholder="e.g. Premio / Corolla"
-                    className="w-full rounded-xl border border-neutral-800 bg-neutral-950 px-3 py-2.5 text-xs text-white outline-none focus:border-emerald-500"
+                    value={color}
+                    onChange={(e) => setColor(e.target.value)}
+                    placeholder="e.g. Pearl White"
+                    className="w-full rounded-xl border border-white/15 bg-black/50 px-3.5 py-2.5 text-white placeholder-white/40 outline-none focus:border-[#f39c12]"
                   />
                 </div>
               </div>
 
-              <button
-                type="submit"
-                disabled={submitting}
-                className="w-full rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 py-3 text-xs font-bold text-neutral-950 shadow-lg shadow-emerald-500/20 hover:opacity-95 disabled:opacity-50 mt-4"
-              >
-                {submitting ? "Saving..." : "Save Vehicle"}
-              </button>
+              <div className="flex gap-2 pt-3">
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  className="flex-1 rounded-xl border border-white/20 bg-white/5 py-2.5 font-semibold text-white hover:bg-white/10 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="flex-1 rounded-xl bg-[#f39c12] hover:bg-[#e67e22] py-2.5 font-bold text-white shadow-lg shadow-[#f39c12]/20 transition disabled:opacity-50"
+                >
+                  {saving ? "Saving..." : "Save Vehicle"}
+                </button>
+              </div>
             </form>
           </div>
         </div>

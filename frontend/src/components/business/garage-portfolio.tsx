@@ -141,7 +141,7 @@ export function GaragePortfolio({ onSelectGarageForSchedule }: GaragePortfolioPr
         </div>
         <button
           onClick={() => setShowAddModal(true)}
-          className="rounded-xl bg-gradient-to-r from-teal-400 to-emerald-500 px-4 py-2.5 text-xs font-bold text-neutral-950 shadow-lg shadow-teal-500/20 hover:opacity-95"
+          className="rounded-xl bg-[#f39c12] hover:bg-[#e67e22] text-white px-5 py-2.5 text-xs font-bold transition shadow-lg shadow-[#f39c12]/25"
         >
           + Add New Parking Space
         </button>
@@ -176,7 +176,7 @@ export function GaragePortfolio({ onSelectGarageForSchedule }: GaragePortfolioPr
             return (
               <div
                 key={garage.garage_id}
-                className="flex flex-col justify-between rounded-2xl border border-neutral-800 bg-neutral-900/60 p-5 backdrop-blur-xl transition hover:border-teal-500/40 shadow-xl"
+                className="flex flex-col justify-between rounded-2xl bg-black/50 backdrop-blur-md border border-white/20 p-5 shadow-xl hover:border-[#f39c12]/50 transition"
               >
                 <div>
                   <div className="flex items-center justify-between gap-2 mb-3">
@@ -184,14 +184,14 @@ export function GaragePortfolio({ onSelectGarageForSchedule }: GaragePortfolioPr
                       <span
                         className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold border ${
                           isClosed
-                            ? "bg-red-500/10 text-red-400 border-red-500/30"
-                            : "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
+                            ? "bg-red-500/20 text-red-400 border-red-500/30"
+                            : "bg-emerald-500/20 text-emerald-400 border-emerald-500/30"
                         }`}
                       >
                         {isClosed ? "Closed (Override)" : "Active & Open"}
                       </span>
                       {is24_7 && (
-                        <span className="rounded-full bg-blue-500/10 px-2 py-0.5 text-[10px] font-semibold text-blue-400 border border-blue-500/20">
+                        <span className="rounded-full bg-blue-500/20 px-2 py-0.5 text-[10px] font-semibold text-blue-300 border border-blue-500/30">
                           24/7
                         </span>
                       )}
@@ -203,37 +203,38 @@ export function GaragePortfolio({ onSelectGarageForSchedule }: GaragePortfolioPr
                   </div>
 
                   <h3 className="text-base font-bold text-white">{garage.parking_space_name}</h3>
-                  <p className="mt-1 text-xs text-neutral-400">📍 {garage.parking_lot_address}</p>
+                  <p className="mt-1 text-xs text-white/70">📍 {garage.parking_lot_address}</p>
 
                   {/* Stats Grid */}
-                  <div className="mt-4 grid grid-cols-2 gap-2 rounded-xl border border-neutral-800 bg-neutral-950 p-3 text-xs">
+                  <div className="mt-4 grid grid-cols-2 gap-2 rounded-xl bg-black/40 border border-white/10 p-3 text-xs">
                     <div>
-                      <div className="text-[10px] uppercase text-neutral-500">Total Capacity</div>
+                      <div className="text-[10px] uppercase text-white/60">Total Capacity</div>
                       <div className="font-bold text-white mt-0.5">{garage.parking_capacity} Slots</div>
                     </div>
                     <div>
-                      <div className="text-[10px] uppercase text-neutral-500">Hourly Rate</div>
-                      <div className="font-bold text-teal-400 mt-0.5">৳{garage.price_per_hour}/hr</div>
+                      <div className="text-[10px] uppercase text-white/60">Hourly Rate</div>
+                      <div className="font-bold text-[#f39c12] mt-0.5">৳{garage.price_per_hour.toFixed(2)}/hr</div>
                     </div>
                     <div>
-                      <div className="text-[10px] uppercase text-neutral-500">Type</div>
-                      <div className="font-medium text-neutral-300 mt-0.5">{garage.parking_type}</div>
+                      <div className="text-[10px] uppercase text-white/60">Type</div>
+                      <div className="font-medium text-white/90 mt-0.5">{garage.parking_type}</div>
                     </div>
                     <div>
-                      <div className="text-[10px] uppercase text-neutral-500">Availability</div>
-                      <div className="font-bold text-emerald-400 mt-0.5">{garage.availability} Slots Open</div>
+                      <div className="text-[10px] uppercase text-white/60">Safety Verification</div>
+                      <div className="font-medium text-amber-400 mt-0.5">
+                        {garage.is_verified ? "Verified ✓" : "Pending Review"}
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="mt-5 flex items-center justify-between border-t border-neutral-800 pt-3">
-                  <span className="font-mono text-[11px] text-neutral-500">ID: {garage.garage_id}</span>
+                <div className="mt-5 border-t border-white/10 pt-4 flex gap-2">
                   {onSelectGarageForSchedule && (
                     <button
                       onClick={() => onSelectGarageForSchedule(garage)}
-                      className="rounded-lg border border-teal-500/30 bg-teal-500/10 px-3 py-1.5 text-xs font-semibold text-teal-300 hover:bg-teal-500/20 transition"
+                      className="flex-1 rounded-xl bg-white/10 hover:bg-[#f39c12] hover:text-white py-2 text-xs font-bold text-white transition border border-white/15"
                     >
-                      Schedule & Controls ⚡
+                      ⚡ Timing & Schedule Controls
                     </button>
                   )}
                 </div>

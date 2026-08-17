@@ -5,35 +5,22 @@ import { useEffect, useState } from "react";
 import { PaymentModal } from "./payment-modal";
 import { RatingModal } from "./rating-modal";
 
-export interface BookingItem {
+interface Booking {
   id: number;
-  username: string;
   garage_id: string;
+  parking_name: string;
+  parking_address: string;
   license_plate: string;
   booking_date: string;
   booking_time: string;
   duration: number;
   status: "upcoming" | "active" | "completed" | "cancelled";
   payment_status: "pending" | "paid" | "refunded";
-  created_at: string;
-  paid_with_points: boolean;
-  points_used: number;
-  garage_name: string;
-  garage_address: string;
   price_per_hour: number;
   total_amount: number;
-  payment?: {
-    payment_id: number;
-    transaction_id: string;
-    amount: number;
-    payment_method: string;
-    payment_status: string;
-    payment_date: string;
-  };
-  rating?: {
-    rating: number;
-    review_text: string | null;
-  };
+  paid_with_points: boolean;
+  points_used: number;
+  has_rating?: boolean;
 }
 
 interface BookingsListProps {
@@ -41,17 +28,15 @@ interface BookingsListProps {
 }
 
 export function BookingsList({ onRefreshStats }: BookingsListProps) {
-  const [bookings, setBookings] = useState<BookingItem[]>([]);
+  const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filterStatus, setFilterStatus] = useState<string>("all");
-
-  // Modals state
-  const [selectedForPayment, setSelectedForPayment] = useState<BookingItem | null>(null);
-  const [selectedForRating, setSelectedForRating] = useState<BookingItem | null>(null);
-  const [selectedReceipt, setSelectedReceipt] = useState<BookingItem | null>(null);
+  const [selectedBookingForPayment, setSelectedBookingForPayment] = useState<Booking | null>(null);
+  const [selectedBookingForRating, setSelectedBookingForRating] = useState<Booking | null>(null);
+  const [selectedInvoiceBooking, setSelectedInvoiceBooking] = useState<Booking | null>(null);
 
   const fetchBookings = async () => {
     try {
+      setLoading(true);
       const res = await fetch("/api/bookings");
       const data = await res.json();
       if (data.bookings) {
@@ -65,296 +50,330 @@ export function BookingsList({ onRefreshStats }: BookingsListProps) {
   };
 
   useEffect(() => {
-    let ignore = false;
-    async function load() {
-      try {
-        const res = await fetch("/api/bookings");
-        const data = await res.json();
-        if (!ignore && data.bookings) {
-          setBookings(data.bookings);
-        }
-      } catch {
-        // Handled
-      } finally {
-        if (!ignore) setLoading(false);
-      }
-    }
-    load();
-    return () => {
-      ignore = true;
-    };
+    fetchBookings();
   }, []);
 
-  const handleCancelBooking = async (bookingId: number) => {
-    if (!confirm("Are you sure you want to cancel this booking?")) return;
+  const handleCancel = async (id: number) => {
+    if (!confirm("Are you sure you want to cancel this booking? If already paid, a refund will be processed.")) {
+      return;
+    }
+
     try {
-      const res = await fetch(`/api/bookings/${bookingId}/cancel`, { method: "POST" });
+      const res = await fetch(`/api/bookings/${id}/cancel`, { method: "POST" });
       const data = await res.json();
-      if (res.ok) {
-        fetchBookings();
-        if (onRefreshStats) onRefreshStats();
-      } else {
-        alert(data.error || "Failed to cancel booking");
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to cancel booking");
       }
-    } catch {
-      alert("Failed to cancel booking");
+      alert("Booking cancelled successfully.");
+      fetchBookings();
+      if (onRefreshStats) onRefreshStats();
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : "Error cancelling booking");
     }
   };
 
-  const filteredBookings = bookings.filter((b) => {
-    if (filterStatus === "all") return true;
-    if (filterStatus === "active") return b.status === "upcoming" || b.status === "active";
-    return b.status === filterStatus;
-  });
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "active":
-        return "bg-emerald-500/10 text-emerald-400 border-emerald-500/30";
-      case "upcoming":
-        return "bg-blue-500/10 text-blue-400 border-blue-500/30";
-      case "completed":
-        return "bg-neutral-800 text-neutral-300 border-neutral-700";
-      case "cancelled":
-        return "bg-red-500/10 text-red-400 border-red-500/30";
-      default:
-        return "bg-neutral-800 text-neutral-400 border-neutral-700";
-    }
-  };
+  const duePayments = bookings.filter((b) => b.payment_status === "pending" && b.status !== "cancelled");
+  const completedPayments = bookings.filter((b) => b.payment_status === "paid" || b.status === "completed" || b.status === "cancelled");
 
   return (
-    <div>
-      {/* Header & Filter Tabs */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6">
-        <div>
-          <h2 className="text-xl font-bold text-white">My Reservations & Bookings</h2>
-          <p className="text-xs text-neutral-400">
-            Track active parking spots, make payments, and view past reservation receipts.
-          </p>
+    <div className="space-y-8">
+      {/* Header matching payment_history.php lines 432-437 */}
+      <div>
+        <h2 className="text-2xl sm:text-3xl font-bold text-white mb-1">Payment History & Bookings</h2>
+        <p className="text-white/80 text-xs">View your parking reservations, complete payments, and generate invoices</p>
+      </div>
+
+      {/* Payment Summary KPI Cards matching payment_history.php lines 440-460 */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-black/50 backdrop-blur-md rounded-2xl border border-white/15 p-6 shadow-xl flex items-center gap-4">
+          <div className="w-12 h-12 bg-[#f39c12]/20 border border-[#f39c12] rounded-full flex items-center justify-center flex-shrink-0">
+            <span className="text-xl">💳</span>
+          </div>
+          <div>
+            <h3 className="text-base font-bold text-white">Total Bookings</h3>
+            <p className="text-[#f39c12] text-xl font-bold mt-0.5">{bookings.length}</p>
+          </div>
         </div>
 
-        {/* Filter Tabs */}
-        <div className="flex items-center gap-1.5 rounded-xl border border-neutral-800 bg-neutral-950 p-1">
-          {["all", "active", "completed", "cancelled"].map((st) => (
-            <button
-              key={st}
-              onClick={() => setFilterStatus(st)}
-              className={`rounded-lg px-3 py-1.5 text-xs font-semibold capitalize transition ${
-                filterStatus === st
-                  ? "bg-neutral-800 text-white shadow-sm"
-                  : "text-neutral-400 hover:text-neutral-200"
-              }`}
-            >
-              {st === "active" ? "Active / Upcoming" : st}
-            </button>
-          ))}
+        <div className="bg-black/50 backdrop-blur-md rounded-2xl border border-white/15 p-6 shadow-xl flex items-center gap-4">
+          <div className="w-12 h-12 bg-amber-500/20 border border-amber-500 rounded-full flex items-center justify-center flex-shrink-0">
+            <span className="text-xl">⏳</span>
+          </div>
+          <div>
+            <h3 className="text-base font-bold text-white">Pending Due Payments</h3>
+            <p className="text-amber-400 text-xl font-bold mt-0.5">{duePayments.length}</p>
+          </div>
+        </div>
+
+        <div className="bg-black/50 backdrop-blur-md rounded-2xl border border-white/15 p-6 shadow-xl flex items-center gap-4">
+          <div className="w-12 h-12 bg-emerald-500/20 border border-emerald-500 rounded-full flex items-center justify-center flex-shrink-0">
+            <span className="text-xl">✓</span>
+          </div>
+          <div>
+            <h3 className="text-base font-bold text-white">Completed & Settled</h3>
+            <p className="text-emerald-400 text-xl font-bold mt-0.5">
+              {bookings.filter((b) => b.payment_status === "paid").length}
+            </p>
+          </div>
         </div>
       </div>
 
-      {/* Bookings List */}
-      {loading ? (
-        <div className="grid gap-4">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="h-40 animate-pulse rounded-2xl border border-neutral-800 bg-neutral-900/50" />
-          ))}
-        </div>
-      ) : filteredBookings.length === 0 ? (
-        <div className="rounded-2xl border border-neutral-800 bg-neutral-900/40 p-12 text-center">
-          <div className="text-4xl mb-3">🎫</div>
-          <h3 className="text-base font-bold text-white">No reservations found</h3>
-          <p className="mt-1 text-xs text-neutral-400">
-            You don&apos;t have any {filterStatus !== "all" ? filterStatus : ""} bookings at the moment.
-          </p>
-        </div>
-      ) : (
-        <div className="grid gap-4">
-          {filteredBookings.map((b) => {
-            const isPendingPayment = b.payment_status === "pending" && b.status !== "cancelled";
-            const isUpcoming = b.status === "upcoming";
-            const isCompleted = b.status === "completed";
+      {/* Due / Pending Bookings Section */}
+      {duePayments.length > 0 && (
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse" />
+            <h3 className="text-lg font-bold text-white">Action Required: Due Payments ({duePayments.length})</h3>
+          </div>
 
-            return (
-              <div
-                key={b.id}
-                className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 rounded-2xl border border-neutral-800 bg-neutral-900/60 p-5 backdrop-blur-xl transition hover:border-neutral-700 shadow-xl"
-              >
-                <div className="space-y-2">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-mono text-xs font-bold text-white">
-                      #{b.id}
-                    </span>
-                    <span
-                      className={`rounded-full border px-2.5 py-0.5 text-[10px] font-semibold capitalize ${getStatusBadge(
-                        b.status
-                      )}`}
-                    >
-                      {b.status}
-                    </span>
-                    {b.payment_status === "paid" ? (
-                      <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-400 border border-emerald-500/20">
-                        Paid ✓
+          <div className="overflow-x-auto rounded-2xl bg-black/50 backdrop-blur-md border border-amber-500/30 shadow-xl">
+            <table className="w-full text-left text-xs text-white/90">
+              <thead className="border-b border-white/10 bg-white/5 uppercase text-[10px] text-white/60 tracking-wider">
+                <tr>
+                  <th className="p-4">Garage & Location</th>
+                  <th className="p-4">Booking Date & Time</th>
+                  <th className="p-4">Plate / Duration</th>
+                  <th className="p-4">Amount Due</th>
+                  <th className="p-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/10">
+                {duePayments.map((b) => (
+                  <tr key={b.id} className="hover:bg-white/5 transition">
+                    <td className="p-4">
+                      <div className="font-bold text-white">{b.parking_name}</div>
+                      <div className="text-[11px] text-white/60 truncate max-w-xs">{b.parking_address}</div>
+                    </td>
+                    <td className="p-4">
+                      <div className="font-semibold text-white">{b.booking_date}</div>
+                      <div className="text-white/60">{b.booking_time}</div>
+                    </td>
+                    <td className="p-4">
+                      <span className="rounded bg-black/60 px-2 py-0.5 font-mono text-[11px] font-bold text-white border border-white/10">
+                        {b.license_plate}
                       </span>
-                    ) : (
-                      <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-400 border border-amber-500/20">
-                        Payment Pending
+                      <div className="text-white/60 mt-1">{b.duration} hour(s)</div>
+                    </td>
+                    <td className="p-4">
+                      <div className="text-sm font-bold text-[#f39c12]">৳{b.total_amount.toFixed(2)}</div>
+                      <span className="inline-flex rounded-full bg-amber-500/20 px-2 py-0.5 text-[10px] font-bold text-amber-300 border border-amber-500/30">
+                        Pending Payment
                       </span>
-                    )}
-                  </div>
-
-                  <h3 className="text-base font-bold text-white">{b.garage_name}</h3>
-                  <p className="text-xs text-neutral-400">📍 {b.garage_address}</p>
-
-                  <div className="flex flex-wrap items-center gap-4 text-xs text-neutral-300 pt-1">
-                    <div>
-                      <span className="text-neutral-500">Date:</span> <strong>{b.booking_date}</strong> at{" "}
-                      <strong>{b.booking_time}</strong>
-                    </div>
-                    <div>
-                      <span className="text-neutral-500">Duration:</span>{" "}
-                      <strong>{b.duration} hrs</strong>
-                    </div>
-                    <div>
-                      <span className="text-neutral-500">Vehicle:</span>{" "}
-                      <strong className="font-mono">{b.license_plate}</strong>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Right actions */}
-                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2.5 w-full md:w-auto border-t md:border-t-0 border-neutral-800 pt-3 md:pt-0">
-                  <div className="text-left md:text-right mr-3">
-                    <div className="text-[10px] uppercase text-neutral-500">Total Bill</div>
-                    <div className="text-lg font-black text-white">৳{b.total_amount}</div>
-                  </div>
-
-                  {isPendingPayment && (
-                    <button
-                      onClick={() => setSelectedForPayment(b)}
-                      className="w-full sm:w-auto rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 px-4 py-2 text-xs font-bold text-neutral-950 shadow-md shadow-emerald-500/20 hover:opacity-95"
-                    >
-                      Pay Now ৳{b.total_amount}
-                    </button>
-                  )}
-
-                  {b.payment_status === "paid" && (
-                    <button
-                      onClick={() => setSelectedReceipt(b)}
-                      className="w-full sm:w-auto rounded-xl border border-neutral-700 bg-neutral-800 px-3 py-2 text-xs font-medium text-neutral-200 hover:bg-neutral-700"
-                    >
-                      Receipt 📄
-                    </button>
-                  )}
-
-                  {isUpcoming && (
-                    <button
-                      onClick={() => handleCancelBooking(b.id)}
-                      className="w-full sm:w-auto rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs font-medium text-red-300 hover:bg-red-500/20"
-                    >
-                      Cancel
-                    </button>
-                  )}
-
-                  {isCompleted && !b.rating && (
-                    <button
-                      onClick={() => setSelectedForRating(b)}
-                      className="w-full sm:w-auto rounded-xl bg-amber-500/10 border border-amber-500/30 px-3 py-2 text-xs font-semibold text-amber-300 hover:bg-amber-500/20"
-                    >
-                      Rate Spot ⭐
-                    </button>
-                  )}
-
-                  {b.rating && (
-                    <div className="text-xs font-semibold text-amber-400 flex items-center gap-1 bg-amber-500/5 px-2.5 py-1.5 rounded-lg border border-amber-500/20">
-                      <span>★ {b.rating.rating}/5</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            );
-          })}
+                    </td>
+                    <td className="p-4 text-right space-x-2">
+                      <button
+                        onClick={() => setSelectedBookingForPayment(b)}
+                        className="rounded-xl bg-[#f39c12] hover:bg-[#e67e22] px-4 py-2 text-xs font-bold text-white shadow transition"
+                      >
+                        Pay Now 💳
+                      </button>
+                      <button
+                        onClick={() => handleCancel(b.id)}
+                        className="rounded-xl bg-white/10 hover:bg-red-500/20 hover:text-red-300 px-3 py-2 text-xs font-medium text-white transition border border-white/10"
+                      >
+                        Cancel
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
-      {/* Payment Modal */}
-      {selectedForPayment && (
+      {/* Complete Booking History Table matching payment_history.php */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-bold text-white">All Bookings & Payment Records</h3>
+
+        {loading ? (
+          <div className="h-64 rounded-2xl bg-black/40 border border-white/10 animate-pulse" />
+        ) : bookings.length === 0 ? (
+          <div className="rounded-2xl bg-black/50 backdrop-blur-md border border-white/15 p-12 text-center shadow-xl">
+            <span className="text-4xl">🎫</span>
+            <h4 className="text-base font-bold text-white mt-3">No Reservations Found</h4>
+            <p className="text-xs text-white/70 mt-1">
+              You have not booked any parking spaces yet. Explore available locations to reserve.
+            </p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto rounded-2xl bg-black/50 backdrop-blur-md border border-white/15 shadow-xl">
+            <table className="w-full text-left text-xs text-white/90">
+              <thead className="border-b border-white/10 bg-white/5 uppercase text-[10px] text-white/60 tracking-wider">
+                <tr>
+                  <th className="p-4">ID</th>
+                  <th className="p-4">Garage Space</th>
+                  <th className="p-4">Date & Time</th>
+                  <th className="p-4">Vehicle</th>
+                  <th className="p-4">Amount</th>
+                  <th className="p-4">Status</th>
+                  <th className="p-4 text-right">Receipt / Review</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/10">
+                {bookings.map((b) => {
+                  const isPaid = b.payment_status === "paid";
+                  const isCancelled = b.status === "cancelled";
+
+                  return (
+                    <tr key={b.id} className="hover:bg-white/5 transition">
+                      <td className="p-4 font-mono font-bold text-white/80">#BK-{b.id}</td>
+                      <td className="p-4">
+                        <div className="font-bold text-white">{b.parking_name}</div>
+                        <div className="text-[11px] text-white/60 truncate max-w-xs">{b.parking_address}</div>
+                      </td>
+                      <td className="p-4">
+                        <div className="font-semibold text-white">{b.booking_date}</div>
+                        <div className="text-white/60">{b.booking_time} ({b.duration}h)</div>
+                      </td>
+                      <td className="p-4">
+                        <span className="rounded bg-black/60 px-2 py-0.5 font-mono text-[11px] font-bold text-white border border-white/10">
+                          {b.license_plate}
+                        </span>
+                      </td>
+                      <td className="p-4">
+                        <div className="font-bold text-white">৳{b.total_amount.toFixed(2)}</div>
+                        <div className="text-[10px] text-white/60">
+                          {b.paid_with_points ? `Redeemed ${b.points_used} PTS` : "Digital Payment"}
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        {isCancelled ? (
+                          <span className="rounded-full bg-red-500/20 px-2.5 py-0.5 text-[10px] font-bold text-red-400 border border-red-500/30">
+                            Cancelled
+                          </span>
+                        ) : isPaid ? (
+                          <span className="rounded-full bg-emerald-500/20 px-2.5 py-0.5 text-[10px] font-bold text-emerald-400 border border-emerald-500/30">
+                            Paid ✓
+                          </span>
+                        ) : (
+                          <span className="rounded-full bg-amber-500/20 px-2.5 py-0.5 text-[10px] font-bold text-amber-300 border border-amber-500/30">
+                            Pending
+                          </span>
+                        )}
+                      </td>
+                      <td className="p-4 text-right space-x-2">
+                        {isPaid && (
+                          <button
+                            onClick={() => setSelectedInvoiceBooking(b)}
+                            className="rounded-xl border border-white/20 bg-white/5 hover:bg-white/15 px-3 py-1.5 text-xs font-semibold text-white transition"
+                          >
+                            🧾 Invoice
+                          </button>
+                        )}
+                        {b.status === "completed" && !b.has_rating && (
+                          <button
+                            onClick={() => setSelectedBookingForRating(b)}
+                            className="rounded-xl bg-[#f39c12] hover:bg-[#e67e22] px-3 py-1.5 text-xs font-bold text-white transition shadow"
+                          >
+                            ★ Review
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* Payment Gateway Modal */}
+      {selectedBookingForPayment && (
         <PaymentModal
-          bookingId={selectedForPayment.id}
-          garageName={selectedForPayment.garage_name}
-          amount={selectedForPayment.total_amount}
-          pointsUsed={selectedForPayment.points_used}
-          onClose={() => setSelectedForPayment(null)}
+          bookingId={selectedBookingForPayment.id}
+          garageName={selectedBookingForPayment.parking_name}
+          amount={selectedBookingForPayment.total_amount}
+          pointsUsed={selectedBookingForPayment.points_used}
+          onClose={() => setSelectedBookingForPayment(null)}
           onPaymentSuccess={() => {
-            setSelectedForPayment(null);
+            setSelectedBookingForPayment(null);
             fetchBookings();
             if (onRefreshStats) onRefreshStats();
           }}
         />
       )}
 
-      {/* Rating Modal */}
-      {selectedForRating && (
+      {/* Rating & Review Modal */}
+      {selectedBookingForRating && (
         <RatingModal
-          bookingId={selectedForRating.id}
-          garageId={selectedForRating.garage_id}
-          garageName={selectedForRating.garage_name}
-          onClose={() => setSelectedForRating(null)}
+          bookingId={selectedBookingForRating.id}
+          garageId={selectedBookingForRating.garage_id}
+          garageName={selectedBookingForRating.parking_name}
+          onClose={() => setSelectedBookingForRating(null)}
           onRatingSuccess={() => {
-            setSelectedForRating(null);
+            setSelectedBookingForRating(null);
             fetchBookings();
           }}
         />
       )}
 
-      {/* View Receipt Modal */}
-      {selectedReceipt && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
-          <div className="relative w-full max-w-md rounded-2xl border border-neutral-800 bg-neutral-900 p-6 shadow-2xl">
-            <button
-              onClick={() => setSelectedReceipt(null)}
-              className="absolute right-4 top-4 rounded-full p-2 text-neutral-400 hover:bg-neutral-800 hover:text-white"
-            >
-              ✕
-            </button>
-
-            <div className="border-b border-neutral-800 pb-4 mb-4">
-              <span className="rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-semibold text-emerald-400 border border-emerald-500/30">
-                Official Receipt
-              </span>
-              <h3 className="text-xl font-bold text-white mt-2">Parking Lagbe Invoice</h3>
-              <p className="text-xs text-neutral-400">Booking #{selectedReceipt.id}</p>
+      {/* Printable Invoice Modal matching payment_history.php */}
+      {selectedInvoiceBooking && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fadeIn">
+          <div className="w-full max-w-lg bg-neutral-900 rounded-3xl border border-white/20 p-8 shadow-2xl space-y-6 text-white text-xs">
+            <div className="flex items-center justify-between border-b border-white/10 pb-4">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-[#f39c12] flex items-center justify-center font-bold text-black text-sm">
+                  P
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white">Parking Lagbe Receipt</h3>
+                  <p className="text-white/60 text-[10px]">Official Booking Receipt</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedInvoiceBooking(null)}
+                className="text-white/60 hover:text-white text-lg font-bold"
+              >
+                ✕
+              </button>
             </div>
 
-            <div className="space-y-2.5 text-xs text-neutral-300 mb-6">
+            <div className="space-y-3 bg-black/50 rounded-2xl p-5 border border-white/10">
               <div className="flex justify-between">
-                <span className="text-neutral-500">Parking Space:</span>
-                <span className="font-semibold text-white">{selectedReceipt.garage_name}</span>
+                <span className="text-white/60">Booking ID:</span>
+                <span className="font-mono font-bold text-white">#BK-{selectedInvoiceBooking.id}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-neutral-500">Vehicle:</span>
-                <span className="font-mono text-white">{selectedReceipt.license_plate}</span>
+                <span className="text-white/60">Parking Space:</span>
+                <span className="font-bold text-white text-right">{selectedInvoiceBooking.parking_name}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-neutral-500">Date & Duration:</span>
-                <span>{selectedReceipt.booking_date} ({selectedReceipt.duration} hrs)</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-neutral-500">Transaction ID:</span>
-                <span className="font-mono text-emerald-400">
-                  {selectedReceipt.payment?.transaction_id || "TXN_CONFIRMED"}
+                <span className="text-white/60">Date & Arrival:</span>
+                <span className="text-white">
+                  {selectedInvoiceBooking.booking_date} at {selectedInvoiceBooking.booking_time}
                 </span>
               </div>
-              <div className="flex justify-between border-t border-neutral-800 pt-2 font-bold text-sm text-white">
-                <span>Amount Paid:</span>
-                <span className="text-emerald-400">৳{selectedReceipt.total_amount}</span>
+              <div className="flex justify-between">
+                <span className="text-white/60">License Plate:</span>
+                <span className="font-mono font-bold text-white">{selectedInvoiceBooking.license_plate}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-white/60">Duration:</span>
+                <span className="text-white">{selectedInvoiceBooking.duration} hour(s)</span>
+              </div>
+              <div className="border-t border-white/10 pt-3 flex justify-between text-sm">
+                <span className="font-bold text-white">Total Paid:</span>
+                <span className="font-bold text-[#f39c12]">৳{selectedInvoiceBooking.total_amount.toFixed(2)}</span>
               </div>
             </div>
 
-            <button
-              onClick={() => window.print()}
-              className="w-full rounded-xl bg-neutral-800 py-2.5 text-xs font-semibold text-white hover:bg-neutral-700"
-            >
-              Print / Save PDF 🖨️
-            </button>
+            <div className="flex gap-3">
+              <button
+                onClick={() => window.print()}
+                className="flex-1 rounded-xl bg-[#f39c12] hover:bg-[#e67e22] py-2.5 font-bold text-white transition shadow"
+              >
+                🖨️ Print Invoice
+              </button>
+              <button
+                onClick={() => setSelectedInvoiceBooking(null)}
+                className="flex-1 rounded-xl border border-white/20 bg-white/5 hover:bg-white/10 py-2.5 font-semibold text-white transition"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}
