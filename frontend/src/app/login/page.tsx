@@ -1,173 +1,177 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
-function LoginForm() {
+export default function LoginPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const redirectTarget = searchParams.get("redirect");
-
-  const [identifier, setIdentifier] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(true);
+  const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!identifier.trim() || !password) {
-      setError("Please provide both email/username and password.");
-      return;
-    }
-
     setLoading(true);
     setError(null);
 
     try {
-      const response = await fetch("/api/auth/login", {
+      const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ identifier: identifier.trim(), password }),
+        body: JSON.stringify({ username, password, rememberMe }),
       });
 
-      const data = await response.json();
+      const data = await res.json();
 
-      if (!response.ok) {
-        throw new Error(data.error || "Login failed. Please verify your credentials.");
+      if (!res.ok) {
+        throw new Error(data.error || "Invalid username or password");
       }
 
-      // If a specific redirect was requested (e.g. from middleware), honor it unless admin
-      const destination = redirectTarget || data.redirectTo || "/dashboard";
-      router.push(destination);
-      router.refresh();
+      if (data.redirect) {
+        router.push(data.redirect);
+        router.refresh();
+      } else {
+        router.push("/dashboard");
+        router.refresh();
+      }
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Invalid credentials";
-      setError(msg);
+      const message = err instanceof Error ? err.message : "An unexpected error occurred.";
+      setError(message);
+    } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="w-full max-w-md">
-      {/* Brand & Title */}
-      <div className="mb-8 text-center">
-        <Link href="/" className="inline-flex items-center gap-2.5 mb-6 group">
-          <div className="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-emerald-400 to-teal-600 text-lg font-bold text-neutral-950 shadow-lg shadow-emerald-500/20 group-hover:scale-105 transition-transform">
-            P
-          </div>
-          <span className="text-xl font-bold tracking-tight text-white">Parking Lagbe</span>
-        </Link>
-        <h1 className="text-2xl font-bold text-white tracking-tight sm:text-3xl">Welcome back</h1>
-        <p className="mt-2 text-sm text-neutral-400">
-          Sign in with your email or username to access your dashboard.
-        </p>
+    <div className="relative min-h-screen flex items-center justify-center p-4 text-white">
+      {/* Background Image with Overlay matching login.php */}
+      <div
+        className="fixed inset-0 bg-cover bg-center bg-no-repeat z-[-2]"
+        style={{
+          backgroundImage:
+            "url('https://images.unsplash.com/photo-1573348722427-f1d6819fdf98?q=80&w=1374&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D')",
+        }}
+      />
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[-1]" />
+
+      {/* Floating Animated Orbs matching login.php */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none z-[-1]">
+        <div className="absolute top-1/4 left-1/4 w-72 h-72 bg-[#f39c12]/15 rounded-full filter blur-3xl" />
+        <div className="absolute bottom-1/3 right-1/3 w-96 h-96 bg-[#e67e22]/10 rounded-full filter blur-3xl" />
       </div>
 
-      {/* Card Form */}
-      <div className="rounded-2xl border border-neutral-800 bg-neutral-900/60 p-6 backdrop-blur-xl shadow-2xl sm:p-8">
-        {error && (
-          <div className="mb-5 rounded-xl border border-red-500/30 bg-red-500/10 p-3.5 text-xs text-red-300 flex items-start gap-2.5">
-            <span className="text-sm">⚠️</span>
-            <div className="flex-1 leading-relaxed">{error}</div>
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-1.5">
-              Username or Email
-            </label>
-            <input
-              type="text"
-              required
-              value={identifier}
-              onChange={(e) => setIdentifier(e.target.value)}
-              placeholder="e.g. user123 or name@example.com"
-              className="w-full rounded-xl border border-neutral-800 bg-neutral-950/80 px-4 py-3 text-sm text-white placeholder-neutral-500 outline-none transition focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
-              autoComplete="username"
-            />
-          </div>
-
-          <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400">
-                Password
-              </label>
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="text-xs text-neutral-400 hover:text-neutral-200 transition"
-              >
-                {showPassword ? "Hide" : "Show"}
-              </button>
+      <div className="w-full max-w-4xl bg-black/60 backdrop-blur-xl rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row border border-white/20 z-10">
+        {/* Left Section with Illustration matching login.php */}
+        <div className="md:w-1/2 bg-gradient-to-br from-[#f39c12] via-[#e67e22] to-[#d35400] p-8 sm:p-12 text-white flex flex-col justify-between relative overflow-hidden">
+          <div className="relative z-10">
+            <div className="flex items-center mb-6">
+              <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mr-4 shadow-lg shadow-black/20">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-7 w-7 text-[#f39c12]"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                  <path d="M9 18V6h4.5a2.5 2.5 0 0 1 0 5H9" />
+                </svg>
+              </div>
+              <h1 className="text-2xl font-black tracking-tight">পার্কিং লাগবে</h1>
             </div>
-            <div className="relative">
+
+            <h2 className="text-3xl font-extrabold mb-3">Welcome Back!</h2>
+            <p className="text-xs sm:text-sm text-white/90 leading-relaxed">
+              Login to access real-time parking spaces in Dhaka, manage active bookings, track reward points, or host your garage.
+            </p>
+          </div>
+
+          <div className="relative z-10 mt-8 pt-6 border-t border-white/20 text-xs text-white/80">
+            Smart & Secured Parking Network in Bangladesh
+          </div>
+        </div>
+
+        {/* Right Section with Form matching login.php */}
+        <div className="md:w-1/2 p-8 sm:p-12 bg-neutral-950/80 flex flex-col justify-center">
+          <div className="mb-6">
+            <h3 className="text-xl font-bold text-white">Sign In to Your Account</h3>
+            <p className="text-xs text-white/60 mt-1">
+              Enter your credentials to continue to your dashboard.
+            </p>
+          </div>
+
+          {error && (
+            <div className="mb-4 rounded-xl border border-red-500/40 bg-red-500/10 p-3 text-xs text-red-300">
+              ⚠️ {error}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-xs font-semibold text-white/80 mb-1.5">
+                Username or Email
+              </label>
               <input
-                type={showPassword ? "text" : "password"}
+                type="text"
+                required
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="e.g. shakib, saba, or admin"
+                className="w-full rounded-xl border border-white/15 bg-black/50 px-4 py-3 text-xs text-white placeholder-white/40 outline-none focus:border-[#f39c12] transition"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-white/80 mb-1.5">Password</label>
+              <input
+                type="password"
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className="w-full rounded-xl border border-neutral-800 bg-neutral-950/80 px-4 py-3 text-sm text-white placeholder-neutral-500 outline-none transition focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
-                autoComplete="current-password"
+                placeholder="Enter password"
+                className="w-full rounded-xl border border-white/15 bg-black/50 px-4 py-3 text-xs text-white placeholder-white/40 outline-none focus:border-[#f39c12] transition"
               />
             </div>
-          </div>
 
-          <div className="flex items-center justify-between pt-1">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={rememberMe}
-                onChange={(e) => setRememberMe(e.target.checked)}
-                className="h-4 w-4 rounded border-neutral-700 bg-neutral-950 text-emerald-500 focus:ring-emerald-500"
-              />
-              <span className="text-xs text-neutral-400">Remember me</span>
-            </label>
-            <Link
-              href="/"
-              className="text-xs text-neutral-400 hover:text-neutral-200 transition"
+            <div className="flex items-center justify-between text-xs text-white/70">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="rounded border-white/20 bg-black/50 text-[#f39c12] focus:ring-0"
+                />
+                <span>Remember me</span>
+              </label>
+
+              <Link href="#" className="text-[#f39c12] hover:underline">
+                Forgot password?
+              </Link>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full rounded-xl bg-[#f39c12] py-3 text-xs font-bold text-white shadow-xl shadow-[#f39c12]/25 hover:bg-[#e67e22] transition disabled:opacity-50 mt-2"
             >
-              Back to Home
+              {loading ? "Signing In..." : "Sign In to Parking Lagbe 🚗"}
+            </button>
+          </form>
+
+          <div className="mt-6 text-center text-xs text-white/60">
+            Don&apos;t have an account?{" "}
+            <Link href="/register" className="font-bold text-[#f39c12] hover:underline">
+              Create an account
             </Link>
           </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 py-3 text-sm font-semibold text-neutral-950 shadow-lg shadow-emerald-500/20 transition hover:opacity-95 disabled:opacity-50 mt-2"
-          >
-            {loading ? "Signing in..." : "Sign in"}
-          </button>
-        </form>
-
-        <div className="mt-6 border-t border-neutral-800/80 pt-6 text-center text-xs text-neutral-400">
-          Don&apos;t have an account yet?{" "}
-          <Link
-            href="/register"
-            className="font-semibold text-emerald-400 hover:text-emerald-300 transition"
-          >
-            Create an account
-          </Link>
         </div>
       </div>
     </div>
-  );
-}
-
-export default function LoginPage() {
-  return (
-    <main className="min-h-screen bg-neutral-950 px-4 py-12 flex flex-col items-center justify-center relative overflow-hidden">
-      {/* Background glow effects */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-10 right-10 w-72 h-72 bg-teal-500/10 rounded-full blur-3xl pointer-events-none" />
-
-      <Suspense fallback={<div className="text-sm text-neutral-400">Loading sign in...</div>}>
-        <LoginForm />
-      </Suspense>
-    </main>
   );
 }

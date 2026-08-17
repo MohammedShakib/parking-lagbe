@@ -8,13 +8,14 @@ import { ProfileWithAccount } from "@/lib/supabase/database.types";
 
 interface AuthHeaderProps {
   profile: ProfileWithAccount | null;
-  currentDashboard: "user" | "business" | "admin";
+  currentDashboard?: "user" | "business" | "admin";
 }
 
-export function AuthHeader({ profile, currentDashboard }: AuthHeaderProps) {
+export function AuthHeader({ profile, currentDashboard = "user" }: AuthHeaderProps) {
   const router = useRouter();
   const [isSwitching, setIsSwitching] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
@@ -23,150 +24,235 @@ export function AuthHeader({ profile, currentDashboard }: AuthHeaderProps) {
       router.push("/login");
       router.refresh();
     } catch {
-      router.push("/login");
+      setIsLoggingOut(false);
     }
   };
 
   const handleSwitchDashboard = async (target: "user" | "business") => {
     setIsSwitching(true);
     try {
-      const res = await fetch("/api/auth/switch-dashboard", {
+      await fetch("/api/auth/switch-dashboard", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ targetDashboard: target }),
       });
-      const data = await res.json();
-      if (data.redirectTo) {
-        router.push(data.redirectTo);
-        router.refresh();
-      }
+      router.push(target === "business" ? "/business" : "/dashboard");
+      router.refresh();
     } catch {
       setIsSwitching(false);
     }
   };
 
-  const canSwitchToBusiness =
-    profile?.role === "garage_owner" || profile?.role === "dual_user" || profile?.role === "admin";
-  const canSwitchToUser =
-    profile?.role === "garage_owner" || profile?.role === "dual_user" || profile?.role === "admin";
+  const firstLetter = (
+    profile?.first_name?.charAt(0) ||
+    profile?.username?.charAt(0) ||
+    "U"
+  ).toUpperCase();
 
-  const getLevelBadgeColor = (level?: string) => {
-    switch (level) {
-      case "diamond":
-        return "bg-cyan-500/10 text-cyan-400 border-cyan-500/30";
-      case "gold":
-        return "bg-amber-500/10 text-amber-400 border-amber-500/30";
-      default:
-        return "bg-orange-500/10 text-orange-400 border-orange-500/30";
-    }
-  };
+  const userLevelIcon =
+    profile?.user_level === "diamond"
+      ? "💎"
+      : profile?.user_level === "gold"
+      ? "🏆"
+      : "⭐";
 
   return (
-    <header className="sticky top-0 z-40 border-b border-neutral-800 bg-neutral-950/80 backdrop-blur-md">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6">
-        {/* Brand */}
-        <div className="flex items-center gap-4">
-          <Link href="/" className="flex items-center gap-3 group">
-            <div className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-emerald-400 to-teal-600 text-sm font-bold text-neutral-950 shadow-md shadow-emerald-500/20 group-hover:scale-105 transition-transform">
-              P
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-bold text-white tracking-tight">Parking Lagbe</span>
-                {currentDashboard === "admin" && (
-                  <span className="rounded-full bg-red-500/10 px-2 py-0.5 text-[10px] font-semibold text-red-400 border border-red-500/30">
-                    Admin
-                  </span>
-                )}
-                {currentDashboard === "business" && (
-                  <span className="rounded-full bg-teal-500/10 px-2 py-0.5 text-[10px] font-semibold text-teal-400 border border-teal-500/30">
-                    Host / Owner
-                  </span>
-                )}
-                {currentDashboard === "user" && (
-                  <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-400 border border-emerald-500/30">
-                    Driver App
-                  </span>
-                )}
-              </div>
-            </div>
-          </Link>
-        </div>
+    <header className="sticky top-0 z-50 bg-black/60 backdrop-blur-md border-b border-white/20">
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3.5 sm:px-6">
+        {/* Brand Logo matching PHP */}
+        <Link href="/" className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-[#f39c12] rounded-full flex justify-center items-center overflow-hidden shadow-lg shadow-[#f39c12]/30">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="w-6 h-6 text-white"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+              <path d="M9 18V6h4.5a2.5 2.5 0 0 1 0 5H9" />
+            </svg>
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-white tracking-tight drop-shadow-md">
+              পার্কিং লাগবে ?
+            </h1>
+          </div>
+        </Link>
 
-        {/* User Info & Controls */}
-        <div className="flex items-center gap-3 sm:gap-4">
+        {/* Center Nav Links matching PHP */}
+        <nav className="hidden md:flex items-center gap-8 text-sm">
+          <Link
+            href="/"
+            className="text-white/90 hover:text-[#f39c12] font-medium transition-colors"
+          >
+            Home
+          </Link>
+          <Link
+            href="/dashboard"
+            className="text-white/90 hover:text-[#f39c12] font-medium transition-colors"
+          >
+            Find Parking
+          </Link>
+          <Link
+            href="/business"
+            className="text-white/90 hover:text-[#f39c12] font-medium transition-colors"
+          >
+            Host Garage
+          </Link>
+          {profile?.role === "admin" && (
+            <Link
+              href="/admin"
+              className="text-white/90 hover:text-[#f39c12] font-medium transition-colors"
+            >
+              Admin Panel
+            </Link>
+          )}
+        </nav>
+
+        {/* Right Actions */}
+        <div className="flex items-center gap-3">
           {profile ? (
             <>
-              {/* Points & Level (User or Dual) */}
-              <div className="hidden items-center gap-2 sm:flex">
-                <div
-                  className={`flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium capitalize ${getLevelBadgeColor(
-                    profile.user_level
-                  )}`}
-                >
-                  <span className="h-1.5 w-1.5 rounded-full bg-current" />
-                  {profile.user_level}
-                </div>
-                <div className="flex items-center gap-1.5 rounded-full border border-neutral-800 bg-neutral-900 px-3 py-1 text-xs font-medium text-neutral-300">
-                  <span className="text-amber-400">★</span>
-                  <span>{profile.points.toLocaleString()} pts</span>
-                </div>
-              </div>
-
-              {/* Dashboard Switcher */}
-              {currentDashboard === "user" && canSwitchToBusiness && (
+              {/* Switch Portal Button matching PHP */}
+              {currentDashboard === "user" ? (
                 <button
+                  disabled={isSwitching}
                   onClick={() => handleSwitchDashboard("business")}
-                  disabled={isSwitching}
-                  className="hidden rounded-lg border border-teal-500/30 bg-teal-500/10 px-3 py-1.5 text-xs font-medium text-teal-300 transition hover:bg-teal-500/20 sm:inline-block"
+                  className="hidden sm:inline-flex items-center rounded-xl border border-[#f39c12] px-3.5 py-1.5 text-xs font-bold text-white hover:bg-[#f39c12] hover:text-neutral-950 transition shadow-sm"
                 >
-                  {isSwitching ? "Switching..." : "Switch to Host View ⚡"}
+                  {isSwitching ? "Switching..." : "Switch To Business 🏢"}
                 </button>
-              )}
-
-              {currentDashboard === "business" && canSwitchToUser && (
+              ) : currentDashboard === "business" ? (
                 <button
-                  onClick={() => handleSwitchDashboard("user")}
                   disabled={isSwitching}
-                  className="hidden rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-xs font-medium text-emerald-300 transition hover:bg-emerald-500/20 sm:inline-block"
+                  onClick={() => handleSwitchDashboard("user")}
+                  className="hidden sm:inline-flex items-center rounded-xl border border-[#f39c12] px-3.5 py-1.5 text-xs font-bold text-white hover:bg-[#f39c12] hover:text-neutral-950 transition shadow-sm"
                 >
-                  {isSwitching ? "Switching..." : "Switch to Driver App 🚗"}
+                  {isSwitching ? "Switching..." : "Switch To Driver 🚗"}
                 </button>
-              )}
+              ) : null}
 
-              {/* Profile Greeting */}
-              <div className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-neutral-800 text-xs font-bold text-neutral-300 border border-neutral-700">
-                  {profile.first_name?.[0]?.toUpperCase() || profile.username?.[0]?.toUpperCase() || "U"}
-                </div>
-                <div className="hidden text-left md:block">
-                  <div className="text-xs font-medium text-white">
-                    {profile.first_name} {profile.last_name}
-                  </div>
-                  <div className="text-[10px] text-neutral-400">@{profile.username}</div>
-                </div>
-              </div>
-
-              {/* Logout Button */}
-              <button
-                onClick={handleLogout}
-                disabled={isLoggingOut}
-                className="rounded-lg border border-neutral-800 bg-neutral-900 px-3 py-1.5 text-xs font-medium text-neutral-300 transition hover:border-red-500/40 hover:bg-red-500/10 hover:text-red-300"
+              {/* Points Badge matching PHP */}
+              <Link
+                href="/dashboard"
+                className="flex items-center gap-1.5 bg-[#f39c12]/20 backdrop-blur-sm px-3 py-1.5 rounded-full border border-[#f39c12]/40 hover:bg-[#f39c12]/30 transition cursor-pointer"
               >
-                {isLoggingOut ? "..." : "Log out"}
-              </button>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-3.5 w-3.5 text-[#f39c12]"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" />
+                </svg>
+                <span className="text-[#f39c12] font-bold text-xs">
+                  {profile.points.toLocaleString()} PTS
+                </span>
+              </Link>
+
+              {/* Profile Avatar Dropdown matching PHP */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowDropdown(!showDropdown)}
+                  className="w-9 h-9 rounded-full bg-[#f39c12]/20 border-2 border-[#f39c12] overflow-hidden flex items-center justify-center cursor-pointer hover:scale-105 transition"
+                >
+                  <span className="text-sm font-bold text-[#f39c12]">{firstLetter}</span>
+                </button>
+
+                {showDropdown && (
+                  <div className="absolute right-0 mt-2 w-72 rounded-2xl border border-neutral-700 bg-neutral-900 shadow-2xl p-0 overflow-hidden z-50 animate-fadeIn">
+                    {/* Header in dropdown matching PHP */}
+                    <div className="p-4 bg-gradient-to-r from-[#f39c12]/20 to-[#f39c12]/5 border-b border-neutral-800 flex items-center gap-3">
+                      <div className="w-11 h-11 rounded-full bg-[#f39c12]/20 border-2 border-[#f39c12] flex items-center justify-center flex-shrink-0">
+                        <span className="text-base font-bold text-[#f39c12]">{firstLetter}</span>
+                      </div>
+                      <div className="min-w-0">
+                        <div className="font-bold text-white text-xs truncate flex items-center gap-1">
+                          <span>{profile.first_name} {profile.last_name}</span>
+                          <span title={`${profile.user_level} VIP`}>{userLevelIcon}</span>
+                        </div>
+                        <div className="text-[11px] text-neutral-400 truncate">@{profile.username}</div>
+                        <div className="text-[10px] text-[#f39c12] font-semibold mt-0.5">
+                          {profile.user_level} VIP Tier ({profile.points} pts)
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Navigation Menu in dropdown matching PHP */}
+                    <div className="p-2 text-xs space-y-1 text-neutral-300">
+                      <Link
+                        href="/dashboard"
+                        onClick={() => setShowDropdown(false)}
+                        className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-neutral-800 hover:text-white transition"
+                      >
+                        <span>🎫</span>
+                        <span>My Bookings</span>
+                      </Link>
+                      <Link
+                        href="/dashboard"
+                        onClick={() => setShowDropdown(false)}
+                        className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-neutral-800 hover:text-white transition"
+                      >
+                        <span>🚗</span>
+                        <span>My Vehicles</span>
+                      </Link>
+                      <Link
+                        href="/dashboard"
+                        onClick={() => setShowDropdown(false)}
+                        className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-neutral-800 hover:text-white transition"
+                      >
+                        <span>💳</span>
+                        <span>Payment History & Invoices</span>
+                      </Link>
+                      <Link
+                        href="/business"
+                        onClick={() => setShowDropdown(false)}
+                        className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-neutral-800 hover:text-white transition"
+                      >
+                        <span>🏢</span>
+                        <span>Business Dashboard</span>
+                      </Link>
+                      {profile.role === "admin" && (
+                        <Link
+                          href="/admin"
+                          onClick={() => setShowDropdown(false)}
+                          className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-neutral-800 hover:text-white transition"
+                        >
+                          <span>🛡️</span>
+                          <span>Admin Console</span>
+                        </Link>
+                      )}
+
+                      <div className="my-1 border-t border-neutral-800" />
+
+                      <button
+                        disabled={isLoggingOut}
+                        onClick={handleLogout}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-red-400 hover:bg-red-500/10 transition text-left"
+                      >
+                        <span>🚪</span>
+                        <span>{isLoggingOut ? "Logging out..." : "Logout"}</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </>
           ) : (
             <div className="flex items-center gap-2">
               <Link
                 href="/login"
-                className="rounded-lg border border-neutral-800 bg-neutral-900 px-3.5 py-1.5 text-xs font-medium text-neutral-300 hover:bg-neutral-800"
+                className="rounded-xl border border-white/20 bg-black/40 px-4 py-2 text-xs font-bold text-white hover:border-[#f39c12] hover:text-[#f39c12] transition"
               >
-                Sign in
+                Login
               </Link>
               <Link
                 href="/register"
-                className="rounded-lg bg-emerald-500 px-3.5 py-1.5 text-xs font-medium text-neutral-950 hover:bg-emerald-400"
+                className="rounded-xl bg-[#f39c12] px-4 py-2 text-xs font-bold text-white hover:bg-[#e67e22] shadow-lg shadow-[#f39c12]/20 transition"
               >
                 Register
               </Link>

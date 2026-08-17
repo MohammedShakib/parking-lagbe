@@ -6,342 +6,245 @@ import { useState } from "react";
 
 export default function RegisterPage() {
   const router = useRouter();
-
-  // User type tab: 'user' | 'garage_owner'
-  const [accountType, setAccountType] = useState<"user" | "garage_owner">("user");
-
-  // Personal fields
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
+  const [userType, setUserType] = useState<"driver" | "owner">("driver");
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-
-  // Garage fields (if garage_owner)
-  const [garageName, setGarageName] = useState("");
-  const [parkingLotAddress, setParkingLotAddress] = useState("");
-  const [parkingType, setParkingType] = useState("Indoor");
-  const [garageSlots, setGarageSlots] = useState("5");
-  const [pricePerHour, setPricePerHour] = useState("50");
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
     setError(null);
 
-    if (password !== confirmPassword) {
-      setError("Passwords do not match. Please re-enter your password.");
-      return;
-    }
-
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters.");
-      return;
-    }
-
-    setLoading(true);
-
     try {
-      const payload: Record<string, unknown> = {
-        firstName: firstName.trim(),
-        lastName: lastName.trim(),
-        username: username.trim().toLowerCase(),
-        email: email.trim().toLowerCase(),
-        phone: phone.trim(),
-        address: address.trim(),
-        password,
-        isGarageOwner: accountType === "garage_owner",
-      };
-
-      if (accountType === "garage_owner") {
-        payload.garageDetails = {
-          garageName: garageName.trim() || `${firstName}'s Parking Space`,
-          parkingLotAddress: parkingLotAddress.trim() || address.trim(),
-          parkingType,
-          parkingDimensions: "Standard (Car & Bike)",
-          garageSlots: parseInt(garageSlots, 10) || 5,
-          pricePerHour: parseFloat(pricePerHour) || 50,
-          latitude: 23.8103,
-          longitude: 90.4125,
-        };
-      }
-
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          username,
+          email,
+          password,
+          firstName,
+          lastName,
+          phone,
+          address,
+          accountType: userType === "owner" ? "owner" : "user",
+        }),
       });
 
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || "Registration failed. Please check your details.");
+        throw new Error(data.error || "Registration failed");
       }
 
-      // Success -> navigate to dashboard
-      const target = data.redirectTo || (accountType === "garage_owner" ? "/business" : "/dashboard");
-      router.push(target);
-      router.refresh();
+      router.push("/login?registered=true");
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Registration error";
-      setError(msg);
+      const message = err instanceof Error ? err.message : "Registration error";
+      setError(message);
+    } finally {
       setLoading(false);
     }
   };
 
   return (
-    <main className="min-h-screen bg-neutral-950 px-4 py-10 flex flex-col items-center justify-center relative overflow-hidden">
-      {/* Background ambient lighting */}
-      <div className="absolute top-10 left-1/3 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-10 right-1/4 w-80 h-80 bg-teal-500/10 rounded-full blur-3xl pointer-events-none" />
+    <div className="relative min-h-screen flex items-center justify-center p-4 text-white">
+      {/* Background Image with Overlay matching registration.php */}
+      <div
+        className="fixed inset-0 bg-cover bg-center bg-no-repeat z-[-2]"
+        style={{
+          backgroundImage:
+            "url('https://images.unsplash.com/photo-1573348722427-f1d6819fdf98?q=80&w=1374&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D')",
+        }}
+      />
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[-1]" />
 
-      <div className="w-full max-w-xl">
-        {/* Brand Header */}
-        <div className="mb-6 text-center">
-          <Link href="/" className="inline-flex items-center gap-2.5 mb-4 group">
-            <div className="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-emerald-400 to-teal-600 text-lg font-bold text-neutral-950 shadow-lg shadow-emerald-500/20 group-hover:scale-105 transition-transform">
-              P
+      <div className="w-full max-w-4xl bg-black/60 backdrop-blur-xl rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row border border-white/20 z-10">
+        {/* Left Banner */}
+        <div className="md:w-5/12 bg-gradient-to-br from-[#f39c12] via-[#e67e22] to-[#d35400] p-8 sm:p-12 text-white flex flex-col justify-between relative overflow-hidden">
+          <div className="relative z-10">
+            <div className="flex items-center mb-6">
+              <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mr-4 shadow-lg shadow-black/20">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-7 w-7 text-[#f39c12]"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                  <path d="M9 18V6h4.5a2.5 2.5 0 0 1 0 5H9" />
+                </svg>
+              </div>
+              <h1 className="text-2xl font-black tracking-tight">পার্কিং লাগবে</h1>
             </div>
-            <span className="text-xl font-bold tracking-tight text-white">Parking Lagbe</span>
-          </Link>
-          <h1 className="text-2xl font-bold text-white tracking-tight sm:text-3xl">Create your account</h1>
-          <p className="mt-1.5 text-xs text-neutral-400">
-            Join the smart parking network to reserve or host parking spaces.
-          </p>
+
+            <h2 className="text-3xl font-extrabold mb-3">Join The Network!</h2>
+            <p className="text-xs sm:text-sm text-white/90 leading-relaxed">
+              Create your account in seconds. Find parking instantly across Dhaka or monetize your vacant parking spot.
+            </p>
+          </div>
+
+          <div className="relative z-10 mt-8 pt-6 border-t border-white/20 text-xs text-white/80">
+            Guaranteed Parking Security & Digital Payment
+          </div>
         </div>
 
-        {/* Card Form */}
-        <div className="rounded-2xl border border-neutral-800 bg-neutral-900/70 p-6 backdrop-blur-xl shadow-2xl sm:p-8">
-          {/* Account Type Toggle */}
-          <div className="mb-6 grid grid-cols-2 gap-2 rounded-xl border border-neutral-800 bg-neutral-950/80 p-1">
+        {/* Right Form */}
+        <div className="md:w-7/12 p-8 sm:p-10 bg-neutral-950/80">
+          <div className="mb-6">
+            <h3 className="text-xl font-bold text-white">Create New Account</h3>
+            <p className="text-xs text-white/60 mt-1">
+              Select your role and enter your details below.
+            </p>
+          </div>
+
+          {/* Role Switcher */}
+          <div className="grid grid-cols-2 gap-2 mb-5 rounded-xl bg-black/50 p-1 border border-white/10">
             <button
               type="button"
-              onClick={() => setAccountType("user")}
-              className={`flex items-center justify-center gap-2 rounded-lg py-2.5 text-xs font-semibold transition ${
-                accountType === "user"
-                  ? "bg-emerald-500 text-neutral-950 shadow-sm"
-                  : "text-neutral-400 hover:text-white"
+              onClick={() => setUserType("driver")}
+              className={`rounded-lg py-2 text-xs font-bold transition ${
+                userType === "driver"
+                  ? "bg-[#f39c12] text-white shadow-md"
+                  : "text-white/60 hover:text-white"
               }`}
             >
-              <span>🚗</span>
-              <span>Driver / User</span>
+              🚗 Driver (Book Spots)
             </button>
             <button
               type="button"
-              onClick={() => setAccountType("garage_owner")}
-              className={`flex items-center justify-center gap-2 rounded-lg py-2.5 text-xs font-semibold transition ${
-                accountType === "garage_owner"
-                  ? "bg-teal-400 text-neutral-950 shadow-sm"
-                  : "text-neutral-400 hover:text-white"
+              onClick={() => setUserType("owner")}
+              className={`rounded-lg py-2 text-xs font-bold transition ${
+                userType === "owner"
+                  ? "bg-[#f39c12] text-white shadow-md"
+                  : "text-white/60 hover:text-white"
               }`}
             >
-              <span>🅿️</span>
-              <span>Garage / Host</span>
+              🏢 Space Host (Earn 70%)
             </button>
           </div>
 
           {error && (
-            <div className="mb-5 rounded-xl border border-red-500/30 bg-red-500/10 p-3.5 text-xs text-red-300 flex items-start gap-2.5">
-              <span className="text-sm">⚠️</span>
-              <div className="flex-1 leading-relaxed">{error}</div>
+            <div className="mb-4 rounded-xl border border-red-500/40 bg-red-500/10 p-3 text-xs text-red-300">
+              ⚠️ {error}
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Personal Details Section */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <form onSubmit={handleRegister} className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-medium text-neutral-400 mb-1">First Name</label>
+                <label className="block text-xs font-semibold text-white/80 mb-1">First Name</label>
                 <input
                   type="text"
                   required
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
                   placeholder="e.g. Shakib"
-                  className="w-full rounded-xl border border-neutral-800 bg-neutral-950 px-3.5 py-2.5 text-xs text-white placeholder-neutral-500 outline-none transition focus:border-emerald-500"
+                  className="w-full rounded-xl border border-white/15 bg-black/50 px-3.5 py-2.5 text-xs text-white placeholder-white/40 outline-none focus:border-[#f39c12]"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-neutral-400 mb-1">Last Name</label>
+                <label className="block text-xs font-semibold text-white/80 mb-1">Last Name</label>
                 <input
                   type="text"
                   required
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
-                  placeholder="e.g. Ahmed"
-                  className="w-full rounded-xl border border-neutral-800 bg-neutral-950 px-3.5 py-2.5 text-xs text-white placeholder-neutral-500 outline-none transition focus:border-emerald-500"
+                  placeholder="e.g. Khan"
+                  className="w-full rounded-xl border border-white/15 bg-black/50 px-3.5 py-2.5 text-xs text-white placeholder-white/40 outline-none focus:border-[#f39c12]"
                 />
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-medium text-neutral-400 mb-1">Username</label>
+                <label className="block text-xs font-semibold text-white/80 mb-1">Username</label>
                 <input
                   type="text"
                   required
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  placeholder="e.g. shakib99"
-                  className="w-full rounded-xl border border-neutral-800 bg-neutral-950 px-3.5 py-2.5 text-xs text-white placeholder-neutral-500 outline-none transition focus:border-emerald-500"
-                  autoComplete="username"
+                  placeholder="e.g. shakib01"
+                  className="w-full rounded-xl border border-white/15 bg-black/50 px-3.5 py-2.5 text-xs text-white placeholder-white/40 outline-none focus:border-[#f39c12]"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-neutral-400 mb-1">Email</label>
+                <label className="block text-xs font-semibold text-white/80 mb-1">Email</label>
                 <input
                   type="email"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="name@example.com"
-                  className="w-full rounded-xl border border-neutral-800 bg-neutral-950 px-3.5 py-2.5 text-xs text-white placeholder-neutral-500 outline-none transition focus:border-emerald-500"
-                  autoComplete="email"
+                  placeholder="name@domain.com"
+                  className="w-full rounded-xl border border-white/15 bg-black/50 px-3.5 py-2.5 text-xs text-white placeholder-white/40 outline-none focus:border-[#f39c12]"
                 />
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-medium text-neutral-400 mb-1">Phone (Optional)</label>
+                <label className="block text-xs font-semibold text-white/80 mb-1">Phone</label>
                 <input
                   type="tel"
+                  required
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="+880 1700 000000"
-                  className="w-full rounded-xl border border-neutral-800 bg-neutral-950 px-3.5 py-2.5 text-xs text-white placeholder-neutral-500 outline-none transition focus:border-emerald-500"
+                  className="w-full rounded-xl border border-white/15 bg-black/50 px-3.5 py-2.5 text-xs text-white placeholder-white/40 outline-none focus:border-[#f39c12]"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-neutral-400 mb-1">Address (Optional)</label>
-                <input
-                  type="text"
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                  placeholder="Dhanmondi, Dhaka"
-                  className="w-full rounded-xl border border-neutral-800 bg-neutral-950 px-3.5 py-2.5 text-xs text-white placeholder-neutral-500 outline-none transition focus:border-emerald-500"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-medium text-neutral-400 mb-1">Password</label>
+                <label className="block text-xs font-semibold text-white/80 mb-1">Password</label>
                 <input
                   type="password"
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Min 6 characters"
-                  className="w-full rounded-xl border border-neutral-800 bg-neutral-950 px-3.5 py-2.5 text-xs text-white placeholder-neutral-500 outline-none transition focus:border-emerald-500"
-                  autoComplete="new-password"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-neutral-400 mb-1">Confirm Password</label>
-                <input
-                  type="password"
-                  required
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Repeat password"
-                  className="w-full rounded-xl border border-neutral-800 bg-neutral-950 px-3.5 py-2.5 text-xs text-white placeholder-neutral-500 outline-none transition focus:border-emerald-500"
-                  autoComplete="new-password"
+                  placeholder="Create password"
+                  className="w-full rounded-xl border border-white/15 bg-black/50 px-3.5 py-2.5 text-xs text-white placeholder-white/40 outline-none focus:border-[#f39c12]"
                 />
               </div>
             </div>
 
-            {/* Space / Garage Owner Additional Info */}
-            {accountType === "garage_owner" && (
-              <div className="mt-4 rounded-xl border border-teal-500/30 bg-teal-950/20 p-4 space-y-3">
-                <div className="flex items-center gap-2 text-xs font-semibold text-teal-300 mb-1">
-                  <span>🅿️ Initial Garage Listing Details</span>
-                </div>
-                <div>
-                  <label className="block text-[11px] font-medium text-neutral-400 mb-1">Garage / Space Name</label>
-                  <input
-                    type="text"
-                    required={accountType === "garage_owner"}
-                    value={garageName}
-                    onChange={(e) => setGarageName(e.target.value)}
-                    placeholder="e.g. Green Valley Parking Zone"
-                    className="w-full rounded-lg border border-neutral-800 bg-neutral-950 px-3 py-2 text-xs text-white placeholder-neutral-500 outline-none focus:border-teal-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[11px] font-medium text-neutral-400 mb-1">Parking Address</label>
-                  <input
-                    type="text"
-                    required={accountType === "garage_owner"}
-                    value={parkingLotAddress}
-                    onChange={(e) => setParkingLotAddress(e.target.value)}
-                    placeholder="e.g. Road 27, Banani, Dhaka"
-                    className="w-full rounded-lg border border-neutral-800 bg-neutral-950 px-3 py-2 text-xs text-white placeholder-neutral-500 outline-none focus:border-teal-500"
-                  />
-                </div>
-                <div className="grid grid-cols-3 gap-2">
-                  <div>
-                    <label className="block text-[11px] font-medium text-neutral-400 mb-1">Type</label>
-                    <select
-                      value={parkingType}
-                      onChange={(e) => setParkingType(e.target.value)}
-                      className="w-full rounded-lg border border-neutral-800 bg-neutral-950 px-2.5 py-2 text-xs text-white outline-none focus:border-teal-500"
-                    >
-                      <option value="Indoor">Indoor</option>
-                      <option value="Outdoor">Outdoor</option>
-                      <option value="Covered">Covered</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-[11px] font-medium text-neutral-400 mb-1">Capacity</label>
-                    <input
-                      type="number"
-                      min="1"
-                      value={garageSlots}
-                      onChange={(e) => setGarageSlots(e.target.value)}
-                      className="w-full rounded-lg border border-neutral-800 bg-neutral-950 px-2.5 py-2 text-xs text-white outline-none focus:border-teal-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[11px] font-medium text-neutral-400 mb-1">Rate (৳/hr)</label>
-                    <input
-                      type="number"
-                      min="10"
-                      value={pricePerHour}
-                      onChange={(e) => setPricePerHour(e.target.value)}
-                      className="w-full rounded-lg border border-neutral-800 bg-neutral-950 px-2.5 py-2 text-xs text-white outline-none focus:border-teal-500"
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
+            <div>
+              <label className="block text-xs font-semibold text-white/80 mb-1">Area / Address</label>
+              <input
+                type="text"
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                placeholder="e.g. Dhanmondi, Dhaka"
+                className="w-full rounded-xl border border-white/15 bg-black/50 px-3.5 py-2.5 text-xs text-white placeholder-white/40 outline-none focus:border-[#f39c12]"
+              />
+            </div>
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 py-3 text-xs font-semibold text-neutral-950 shadow-lg shadow-emerald-500/20 transition hover:opacity-95 disabled:opacity-50 mt-4"
+              className="w-full rounded-xl bg-[#f39c12] py-3 text-xs font-bold text-white shadow-xl shadow-[#f39c12]/25 hover:bg-[#e67e22] transition disabled:opacity-50 mt-3"
             >
-              {loading
-                ? "Creating account..."
-                : accountType === "garage_owner"
-                ? "Register as Space Host"
-                : "Create Driver Account"}
+              {loading ? "Creating Account..." : "Create Free Account 🚀"}
             </button>
           </form>
 
-          <div className="mt-6 border-t border-neutral-800/80 pt-5 text-center text-xs text-neutral-400">
+          <div className="mt-4 text-center text-xs text-white/60">
             Already have an account?{" "}
-            <Link href="/login" className="font-semibold text-emerald-400 hover:text-emerald-300 transition">
-              Sign in
+            <Link href="/login" className="font-bold text-[#f39c12] hover:underline">
+              Sign In
             </Link>
           </div>
         </div>
       </div>
-    </main>
+    </div>
   );
 }
