@@ -1,0 +1,29 @@
+# Dependencies and build output
+node_modules/
+.next/
+out/
+dist/
+build/
+vendor/
+
+# Environment and local config
+.env
+.env.*
+!.env.example
+
+# Local runtime/debug output
+*.log
+*_debug.txt
+
+# User-uploaded/private files
+uploads/
+
+# Database dumps with sample/private data
+*.sql
+!supabase/migrations/*.sql
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
