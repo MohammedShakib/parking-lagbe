@@ -4,8 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import type { DivIcon } from "leaflet";
 import { useEffect, useMemo, useState } from "react";
+import "leaflet/dist/leaflet.css";
 import {
-  Circle,
   MapContainer,
   Marker,
   Popup,
@@ -13,111 +13,11 @@ import {
   useMap,
 } from "react-leaflet";
 
-export type GaragePoint = {
-  id: string;
-  name: string;
-  area: string;
-  position: [number, number];
-  rate: number;
-  spaces: number;
-  totalCapacity: number;
-  rating: number;
-  open: boolean;
-  is24_7: boolean;
-  type: string;
-  image: string;
-};
-
-export const defaultGarages: GaragePoint[] = [
-  {
-    id: "GAR-001",
-    name: "Banani Prime Parking Complex",
-    area: "Road 11, Block D, Banani",
-    position: [23.7942, 90.4062],
-    rate: 60,
-    spaces: 8,
-    totalCapacity: 25,
-    rating: 4.9,
-    open: true,
-    is24_7: true,
-    type: "Covered",
-    image: "https://images.unsplash.com/photo-1506521781263-d8422e82f27a?q=80&w=800&auto=format&fit=crop",
-  },
-  {
-    id: "GAR-002",
-    name: "Gulshan Corporate Underground Garage",
-    area: "Gulshan Avenue, Gulshan 2",
-    position: [23.7925, 90.4153],
-    rate: 80,
-    spaces: 14,
-    totalCapacity: 40,
-    rating: 4.8,
-    open: true,
-    is24_7: true,
-    type: "Underground",
-    image: "https://images.unsplash.com/photo-1590674899484-d5640e854abe?q=80&w=800&auto=format&fit=crop",
-  },
-  {
-    id: "GAR-003",
-    name: "Dhanmondi Lake View Parking Hub",
-    area: "Satmasjid Road, Dhanmondi 27",
-    position: [23.7465, 90.3742],
-    rate: 50,
-    spaces: 5,
-    totalCapacity: 20,
-    rating: 4.7,
-    open: true,
-    is24_7: false,
-    type: "Indoor",
-    image: "https://images.unsplash.com/photo-1573348722427-f1d6819fdf98?q=80&w=800&auto=format&fit=crop",
-  },
-  {
-    id: "GAR-004",
-    name: "Uttara Sector 3 Secure Lot",
-    area: "Sector 3, Uttara Model Town",
-    position: [23.8759, 90.3795],
-    rate: 45,
-    spaces: 12,
-    totalCapacity: 30,
-    rating: 4.9,
-    open: true,
-    is24_7: true,
-    type: "Outdoor",
-    image: "https://images.unsplash.com/photo-1506521781263-d8422e82f27a?q=80&w=800&auto=format&fit=crop",
-  },
-  {
-    id: "GAR-005",
-    name: "Mirpur 14 Central Garage",
-    area: "651 Ibrahimpur, Mirpur 14",
-    position: [23.8223, 90.3669],
-    rate: 40,
-    spaces: 9,
-    totalCapacity: 22,
-    rating: 4.8,
-    open: true,
-    is24_7: true,
-    type: "Indoor",
-    image: "https://images.unsplash.com/photo-1590674899484-d5640e854abe?q=80&w=800&auto=format&fit=crop",
-  },
-  {
-    id: "GAR-006",
-    name: "Motijheel Financial District Parking",
-    area: "Dilkusha Commercial Area, Motijheel",
-    position: [23.7384, 90.4187],
-    rate: 70,
-    spaces: 3,
-    totalCapacity: 35,
-    rating: 4.6,
-    open: true,
-    is24_7: false,
-    type: "Covered",
-    image: "https://images.unsplash.com/photo-1573348722427-f1d6819fdf98?q=80&w=800&auto=format&fit=crop",
-  },
-];
+import { type GaragePoint, defaultGarages } from "./osm-radar-map-data";
 
 const dhakaCenter: [number, number] = [23.8103, 90.4125];
 
-function RecenterMap({ center, zoom }: { center: [number, number]; zoom?: number }) {
+function RecenterMap({ center, zoom, userPosition }: { center: [number, number]; zoom?: number, userPosition: [number, number] | null }) {
   const map = useMap();
 
   useEffect(() => {
@@ -129,129 +29,163 @@ function RecenterMap({ center, zoom }: { center: [number, number]; zoom?: number
 
 interface OSMRadarMapProps {
   selectedGarageId?: string | null;
+  hoveredGarageId?: string | null;
   onSelectGarage?: (garage: GaragePoint) => void;
   filterType?: string;
 }
 
-export function OSMRadarMap({ selectedGarageId, onSelectGarage, filterType = "all" }: OSMRadarMapProps) {
-  const [parkingPin, setParkingPin] = useState<DivIcon | null>(null);
-  const [activePin, setActivePin] = useState<DivIcon | null>(null);
+export function OSMRadarMap({ selectedGarageId, hoveredGarageId, onSelectGarage, filterType = "all" }: OSMRadarMapProps) {
+  const [L, setL] = useState<any>(null);
   const [userPosition, setUserPosition] = useState<[number, number] | null>(null);
   const [center, setCenter] = useState<[number, number]>(dhakaCenter);
   const [zoomLevel, setZoomLevel] = useState<number>(12.2);
   const [activeGarage, setActiveGarage] = useState<GaragePoint | null>(null);
+  const [locatingState, setLocatingState] = useState<"idle" | "locating" | "error">("idle");
+  const [locatingError, setLocatingError] = useState<string>("");
 
   useEffect(() => {
     let mounted = true;
-
-    import("leaflet").then(({ divIcon }) => {
+    import("leaflet").then((leaflet) => {
       if (!mounted) return;
-      setParkingPin(
-        divIcon({
-          className: "parking-map-pin",
-          html: `
-            <div class="parking-map-pin__core"></div>
-            <div class="parking-map-pin__pulse"></div>
-          `,
-          iconSize: [38, 54],
-          iconAnchor: [19, 52],
-          popupAnchor: [0, -50],
-        }),
-      );
-
-      setActivePin(
-        divIcon({
-          className: "parking-map-pin active",
-          html: `
-            <div class="parking-map-pin__core"></div>
-            <div class="parking-map-pin__pulse" style="background: rgba(20,159,232,0.4)"></div>
-          `,
-          iconSize: [44, 60],
-          iconAnchor: [22, 58],
-          popupAnchor: [0, -56],
-        }),
-      );
+      setL(leaflet);
     });
-
-    return () => {
-      mounted = false;
-    };
+    return () => { mounted = false; };
   }, []);
 
-  // Update center when selectedGarageId prop changes
+  // Sync selected/hovered garage
   useEffect(() => {
-    if (selectedGarageId) {
-      const match = defaultGarages.find((g) => g.id === selectedGarageId);
-      if (match) {
+    const targetId = hoveredGarageId || selectedGarageId;
+    if (targetId) {
+      const match = defaultGarages.find((g) => g.id === targetId);
+      if (match && selectedGarageId === targetId) { // only pan on click
         setCenter(match.position);
-        setZoomLevel(14);
+        setZoomLevel(15);
         setActiveGarage(match);
       }
     }
-  }, [selectedGarageId]);
+  }, [selectedGarageId, hoveredGarageId]);
 
   const filteredGarages = useMemo(() => {
     if (!filterType || filterType === "all") return defaultGarages;
     if (filterType === "covered") return defaultGarages.filter((g) => g.type.toLowerCase().includes("cover") || g.type.toLowerCase().includes("underground"));
     if (filterType === "outdoor") return defaultGarages.filter((g) => g.type.toLowerCase().includes("out") || g.type.toLowerCase().includes("open"));
     if (filterType === "24_7") return defaultGarages.filter((g) => g.is24_7);
-    if (filterType === "available") return defaultGarages.filter((g) => g.spaces > 5);
+    if (filterType === "available") return defaultGarages.filter((g) => g.spaces > 0);
     return defaultGarages;
   }, [filterType]);
 
   const requestLocation = () => {
-    if (!navigator.geolocation) return;
+    if (!navigator.geolocation) {
+      setLocatingState("error");
+      setLocatingError("Browser does not support location services.");
+      return;
+    }
+
+    setLocatingState("locating");
+    setLocatingError("");
 
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const next: [number, number] = [pos.coords.latitude, pos.coords.longitude];
         setUserPosition(next);
         setCenter(next);
-        setZoomLevel(13.5);
+        setZoomLevel(14);
+        setLocatingState("idle");
       },
-      () => {
-        setCenter(dhakaCenter);
+      (error) => {
+        setLocatingState("error");
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            setLocatingError("Location access blocked. Please enable permissions.");
+            break;
+          case error.POSITION_UNAVAILABLE:
+            setLocatingError("Location could not be determined.");
+            break;
+          case error.TIMEOUT:
+            setLocatingError("Location request timed out. Try again.");
+            break;
+          default:
+            setLocatingError("An unknown error occurred.");
+            break;
+        }
+        setTimeout(() => setLocatingState("idle"), 4000);
       },
-      { enableHighAccuracy: true, timeout: 8000 },
+      { enableHighAccuracy: true, timeout: 8000 }
     );
   };
 
+  const getMarkerIcon = (garage: GaragePoint, isSelected: boolean) => {
+    if (!L) return null;
+    
+    // Status color based on spaces
+    let dotColor = "bg-red-500";
+    if (garage.spaces > 5) dotColor = "bg-[#73d328]";
+    else if (garage.spaces > 0) dotColor = "bg-amber-500";
+
+    const baseClass = "relative flex items-center justify-center rounded-full bg-white transition-transform duration-200 shadow-sm border border-[#e5eaf0]";
+    const activeClass = isSelected ? "scale-[1.15] ring-2 ring-[#149fe8] shadow-md z-50" : "hover:scale-[1.08] hover:shadow-md";
+    
+    const size = isSelected ? 40 : 36;
+    
+    return L.divIcon({
+      className: "bg-transparent border-none",
+      html: `
+        <div class="${baseClass} ${activeClass}" style="width: ${size}px; height: ${size}px;">
+          <img src="/icons/parking-lagbe-icon-transparent.png" alt="Parking Lagbe" class="w-[70%] h-[70%] object-contain" />
+          <div class="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white ${dotColor}"></div>
+        </div>
+      `,
+      iconSize: [size, size],
+      iconAnchor: [size/2, size/2],
+      popupAnchor: [0, -size/2 - 4],
+    });
+  };
+
+  const userIcon = useMemo(() => {
+    if (!L) return null;
+    return L.divIcon({
+      className: "bg-transparent border-none",
+      html: `
+        <div class="relative flex items-center justify-center w-6 h-6">
+          <div class="absolute inset-0 rounded-full bg-[#149fe8]/20 animate-ping"></div>
+          <div class="w-3.5 h-3.5 rounded-full bg-[#149fe8] border-2 border-white shadow-sm relative z-10"></div>
+        </div>
+      `,
+      iconSize: [24, 24],
+      iconAnchor: [12, 12],
+    });
+  }, [L]);
+
   return (
-    <div className="relative h-full min-h-[420px] sm:min-h-[520px] w-full overflow-hidden rounded-3xl border border-[#e7ecf1] bg-[#f0f4f8] shadow-sm">
+    <div className="relative h-full min-h-[420px] sm:min-h-[520px] w-full overflow-hidden rounded-2xl bg-[#f7f9fb] shadow-sm">
       <MapContainer
         center={center}
         zoom={zoomLevel}
-        zoomControl={false}
-        scrollWheelZoom
+        zoomControl={true}
+        scrollWheelZoom={false}
         className="h-full w-full z-10"
+        style={{ height: "100%", minHeight: "420px", width: "100%" }}
       >
-        <RecenterMap center={center} zoom={zoomLevel} />
+        <RecenterMap center={center} zoom={zoomLevel} userPosition={userPosition} />
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
 
-        <Circle
-          center={dhakaCenter}
-          radius={14000}
-          pathOptions={{
-            color: "#149fe8",
-            fillColor: "#149fe8",
-            fillOpacity: 0.05,
-            weight: 1.5,
-          }}
-        />
+        {userPosition && userIcon && (
+          <Marker position={userPosition} icon={userIcon} />
+        )}
 
         {filteredGarages.map((garage) => {
-          const isSelected = selectedGarageId === garage.id || activeGarage?.id === garage.id;
-          const pin = isSelected && activePin ? activePin : parkingPin;
-          if (!pin) return null;
+          const isSelected = selectedGarageId === garage.id || hoveredGarageId === garage.id || activeGarage?.id === garage.id;
+          const icon = getMarkerIcon(garage, isSelected);
+          if (!icon) return null;
 
           return (
             <Marker
               key={garage.id}
               position={garage.position}
-              icon={pin}
+              icon={icon}
               eventHandlers={{
                 click: () => {
                   setActiveGarage(garage);
@@ -259,23 +193,35 @@ export function OSMRadarMap({ selectedGarageId, onSelectGarage, filterType = "al
                 },
               }}
             >
-              <Popup className="custom-parking-popup">
-                <div className="p-1 min-w-[200px]">
-                  <div className="flex items-center justify-between gap-2 mb-1">
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                      ● {garage.spaces} Available
+              <Popup className="custom-clean-popup">
+                <div className="p-0 min-w-[220px]">
+                  <div className="mb-1.5 flex items-center justify-between gap-2">
+                    <span className="text-[10px] font-semibold text-[#0b1f33] border border-[#e5eaf0] px-1.5 py-0.5 rounded bg-slate-50">
+                      {garage.type}
                     </span>
-                    <span className="text-[10px] font-semibold text-slate-500">
-                      ★ {garage.rating}
+                    <div className="flex items-center gap-1 text-[11px] text-[#0b1f33] font-semibold">
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" strokeWidth="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                      {garage.rating}
+                    </div>
+                  </div>
+                  <h4 className="text-[13px] font-bold text-[#0b1f33] leading-tight mb-0.5">{garage.name}</h4>
+                  <p className="text-[11px] text-[#64748b] mb-2">{garage.area}</p>
+                  
+                  <div className="flex items-center gap-1.5 mb-3 text-[11px] font-medium">
+                    <div className={`w-1.5 h-1.5 rounded-full ${garage.spaces > 5 ? 'bg-[#73d328]' : garage.spaces > 0 ? 'bg-amber-500' : 'bg-red-500'}`}></div>
+                    <span className={garage.spaces > 0 ? "text-[#0b1f33]" : "text-red-500"}>
+                      {garage.spaces > 0 ? `${garage.spaces} slots available` : 'Full'}
                     </span>
                   </div>
-                  <div className="text-xs font-bold text-[#0b1f33] leading-snug">{garage.name}</div>
-                  <div className="text-[11px] text-slate-500 mt-0.5">{garage.area}</div>
-                  <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between">
-                    <span className="text-xs font-extrabold text-[#149fe8]">৳{garage.rate}/hr</span>
+                  
+                  <div className="pt-2 border-t border-[#e5eaf0] flex items-center justify-between">
+                    <div>
+                      <span className="text-[13px] font-bold text-[#149fe8]">৳{garage.rate}</span>
+                      <span className="text-[10px] text-[#64748b]">/hr</span>
+                    </div>
                     <Link
                       href={`/dashboard?garage=${garage.id}`}
-                      className="px-2.5 py-1 rounded-lg bg-gradient-to-r from-[#149fe8] to-[#73d328] text-[10px] font-bold text-white shadow-sm"
+                      className="px-3 py-1.5 rounded-md bg-[#0b1f33] hover:bg-[#162d47] text-[11px] font-semibold text-white transition-colors"
                     >
                       Reserve Spot
                     </Link>
@@ -287,119 +233,85 @@ export function OSMRadarMap({ selectedGarageId, onSelectGarage, filterType = "al
         })}
       </MapContainer>
 
-      {/* Floating Status & Controls Header Overlay */}
-      <div className="absolute top-4 left-4 z-[400] flex flex-col gap-2 pointer-events-none">
-        <div className="pointer-events-auto rounded-2xl border border-white/80 bg-white/95 px-4 py-3 shadow-lg backdrop-blur-md">
-          <div className="flex items-center gap-2">
-            <span className="relative flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#73d328] opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#73d328]"></span>
-            </span>
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-              Live Dhaka Radar
-            </span>
-          </div>
-          <div className="text-xs font-bold text-[#0b1f33] mt-0.5">
-            {filteredGarages.length} Verified Smart Garages
-          </div>
+      {/* Overlays */}
+      <div className="absolute top-4 right-14 sm:right-4 z-[400] flex flex-col gap-2 pointer-events-none items-end">
+        
+        {/* Status Overlay */}
+        <div className="pointer-events-auto flex items-center gap-2 rounded-full border border-[#e5eaf0] bg-white/95 px-3 py-1.5 shadow-sm backdrop-blur-sm">
+          <span className="h-1.5 w-1.5 rounded-full bg-[#73d328]"></span>
+          <span className="text-[10px] font-semibold text-[#0b1f33]">
+            {filteredGarages.length} verified spots
+          </span>
         </div>
-      </div>
 
-      {/* GPS Locate Button */}
-      <div className="absolute top-4 right-4 z-[400]">
-        <button
-          type="button"
-          onClick={requestLocation}
-          className="inline-flex items-center gap-2 rounded-xl bg-[#0b1f33] hover:bg-[#149fe8] px-4 py-2.5 text-xs font-bold text-white shadow-lg transition-all duration-200 cursor-pointer"
-        >
-          <span>📍</span>
-          <span>Use My Location</span>
-        </button>
+        {/* Locate Me / Reset Buttons */}
+        <div className="pointer-events-auto flex flex-col gap-2 mt-2">
+          <button
+            type="button"
+            onClick={requestLocation}
+            disabled={locatingState === "locating"}
+            className="flex items-center justify-center w-9 h-9 rounded-md bg-white hover:bg-[#f7f9fb] text-[#0b1f33] shadow-sm border border-[#e5eaf0] transition-colors"
+            aria-label="Use my current location"
+            title="Use my current location"
+          >
+            {locatingState === "locating" ? (
+              <svg className="animate-spin h-4 w-4 text-[#149fe8]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+            ) : (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+            )}
+          </button>
+          
+          <button
+            type="button"
+            onClick={() => {
+              setCenter(dhakaCenter);
+              setZoomLevel(12.2);
+              setActiveGarage(null);
+            }}
+            className="flex items-center justify-center w-9 h-9 rounded-md bg-white hover:bg-[#f7f9fb] text-[#64748b] hover:text-[#0b1f33] shadow-sm border border-[#e5eaf0] transition-colors"
+            aria-label="Reset map view"
+            title="Reset map view"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+          </button>
+        </div>
+        
+        {locatingState === "error" && (
+          <div className="pointer-events-auto rounded border border-red-200 bg-red-50 px-2 py-1 text-[10px] text-red-600 mt-1 max-w-[150px] text-right shadow-sm">
+            {locatingError}
+          </div>
+        )}
       </div>
 
       {/* Quick Area Filter Pills */}
-      <div className="absolute bottom-4 left-4 right-4 sm:right-auto z-[400] flex flex-wrap gap-2 pointer-events-auto">
-        <button
-          type="button"
-          onClick={() => {
-            setCenter([23.7942, 90.4062]);
-            setZoomLevel(14.5);
-          }}
-          className="rounded-xl border border-white/80 bg-white/95 px-3.5 py-1.5 text-xs font-bold text-[#0b1f33] shadow-md backdrop-blur hover:border-[#149fe8] hover:text-[#149fe8] transition cursor-pointer"
-        >
-          Banani
-        </button>
-        <button
-          type="button"
-          onClick={() => {
-            setCenter([23.7925, 90.4153]);
-            setZoomLevel(14.5);
-          }}
-          className="rounded-xl border border-white/80 bg-white/95 px-3.5 py-1.5 text-xs font-bold text-[#0b1f33] shadow-md backdrop-blur hover:border-[#149fe8] hover:text-[#149fe8] transition cursor-pointer"
-        >
-          Gulshan 2
-        </button>
-        <button
-          type="button"
-          onClick={() => {
-            setCenter([23.7465, 90.3742]);
-            setZoomLevel(14.5);
-          }}
-          className="rounded-xl border border-white/80 bg-white/95 px-3.5 py-1.5 text-xs font-bold text-[#0b1f33] shadow-md backdrop-blur hover:border-[#149fe8] hover:text-[#149fe8] transition cursor-pointer"
-        >
-          Dhanmondi
-        </button>
-        <button
-          type="button"
-          onClick={() => {
-            setCenter([23.8759, 90.3795]);
-            setZoomLevel(14.5);
-          }}
-          className="rounded-xl border border-white/80 bg-white/95 px-3.5 py-1.5 text-xs font-bold text-[#0b1f33] shadow-md backdrop-blur hover:border-[#149fe8] hover:text-[#149fe8] transition cursor-pointer"
-        >
-          Uttara
-        </button>
-        <button
-          type="button"
-          onClick={() => {
-            setCenter([23.8223, 90.3669]);
-            setZoomLevel(14.5);
-          }}
-          className="rounded-xl border border-white/80 bg-white/95 px-3.5 py-1.5 text-xs font-bold text-[#0b1f33] shadow-md backdrop-blur hover:border-[#149fe8] hover:text-[#149fe8] transition cursor-pointer"
-        >
-          Mirpur 14
-        </button>
+      <div className="absolute bottom-4 left-4 right-4 z-[400] flex flex-wrap gap-2 pointer-events-auto">
+        {[
+          { label: "Banani", pos: [23.7942, 90.4062] },
+          { label: "Gulshan 2", pos: [23.7925, 90.4153] },
+          { label: "Dhanmondi", pos: [23.7465, 90.3742] },
+          { label: "Uttara", pos: [23.8759, 90.3795] },
+          { label: "Mirpur", pos: [23.8223, 90.3669] },
+        ].map((loc) => (
+          <button
+            key={loc.label}
+            type="button"
+            onClick={() => {
+              setCenter(loc.pos as [number, number]);
+              setZoomLevel(14.5);
+            }}
+            className="rounded-full border border-[#e5eaf0] bg-white/95 px-3 py-1 text-[11px] font-semibold text-[#64748b] shadow-sm backdrop-blur hover:border-[#149fe8] hover:text-[#149fe8] transition-colors cursor-pointer"
+          >
+            {loc.label}
+          </button>
+        ))}
       </div>
 
-      {/* Floating Selected Garage Card Popup at bottom-right */}
-      {activeGarage && (
-        <div className="hidden lg:flex absolute bottom-4 right-4 z-[400] w-80 rounded-2xl border border-white/90 bg-white/95 p-3.5 shadow-2xl backdrop-blur-md animate-in fade-in slide-in-from-bottom-3">
-          <div className="flex gap-3 w-full">
-            <div className="relative h-16 w-16 flex-shrink-0 rounded-xl overflow-hidden bg-slate-100">
-              <Image
-                src={activeGarage.image}
-                alt={activeGarage.name}
-                fill
-                className="object-cover"
-              />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold text-emerald-600">● {activeGarage.spaces} slots</span>
-                <span className="text-[10px] font-bold text-amber-500">★ {activeGarage.rating}</span>
-              </div>
-              <h4 className="text-xs font-bold text-[#0b1f33] truncate mt-0.5">{activeGarage.name}</h4>
-              <p className="text-[10px] text-slate-500 truncate">{activeGarage.area}</p>
-              <div className="mt-2 flex items-center justify-between">
-                <span className="text-xs font-extrabold text-[#149fe8]">৳{activeGarage.rate}/hr</span>
-                <Link
-                  href={`/dashboard?garage=${activeGarage.id}`}
-                  className="rounded-lg bg-gradient-to-r from-[#149fe8] to-[#73d328] px-3 py-1 text-[11px] font-bold text-white shadow-sm"
-                >
-                  Reserve
-                </Link>
-              </div>
-            </div>
+      {/* Empty State Overlay */}
+      {filteredGarages.length === 0 && (
+        <div className="absolute inset-0 z-[300] flex flex-col items-center justify-center bg-white/60 backdrop-blur-sm pointer-events-none">
+          <div className="rounded-xl border border-[#e5eaf0] bg-white px-5 py-4 shadow-sm pointer-events-auto text-center">
+            <p className="text-sm font-semibold text-[#0b1f33] mb-1">No parking spaces match</p>
+            <p className="text-[11px] text-[#64748b]">Try adjusting your filters to see available spots.</p>
           </div>
         </div>
       )}
