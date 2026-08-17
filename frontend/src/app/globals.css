@@ -1,70 +1,86 @@
+@import "leaflet/dist/leaflet.css";
 @import "tailwindcss";
 
 @layer base {
   :root {
-    --primary: #f39c12;
-    --primary-dark: #e67e22;
-    --primary-light: #fef3c7;
-    --background: #f8fafc;
-    --foreground: #0f172a;
+    --font-body: "Inter", system-ui, -apple-system, "Segoe UI", "Hind Siliguri", sans-serif;
+
+    --brand-dark: #0b1f33;
+    --brand-blue: #149fe8;
+    --brand-green: #73d328;
+
+    --bg-main: #ffffff;
+    --bg-secondary: #f7f9fb;
+    --border-color: #e5eaf0;
+
+    --text-primary: #0f172a;
+    --text-secondary: #64748b;
+    --text-muted: #94a3b8;
+  }
+
+  html {
+    scroll-behavior: smooth;
   }
 
   body {
-    background-color: #f8fafc;
+    background-color: #ffffff;
     color: #0f172a;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
   }
 }
 
-/* Crisp White Panel Utility */
-.glass-panel {
-  background-color: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 1rem;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+/* Map Pin */
+.parking-map-pin {
+  position: relative;
+  width: 36px;
+  height: 50px;
 }
 
-.glass-panel-subtle {
-  background-color: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 0.75rem;
+.parking-map-pin__core {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 22px;
+  height: 22px;
+  transform: translateX(-50%) rotate(45deg);
+  border-radius: 50% 50% 50% 2px;
+  background: #149fe8;
+  border: 2.5px solid #ffffff;
+  box-shadow: 0 4px 12px rgba(11, 31, 51, 0.2);
+  transition: transform 0.15s ease;
 }
 
-/* Primary Theme Button */
-.btn-primary-theme {
-  background-color: #f39c12;
-  color: #ffffff;
-  font-weight: 700;
-  border-radius: 0.75rem;
-  transition: all 0.2s ease;
-  box-shadow: 0 4px 12px 0 rgba(243, 156, 18, 0.25);
-}
-
-.btn-primary-theme:hover {
-  background-color: #e67e22;
-  box-shadow: 0 6px 16px rgba(230, 126, 34, 0.35);
-}
-
-.btn-outline-theme {
-  border: 1.5px solid #f39c12;
-  color: #d97706;
-  font-weight: 600;
-  border-radius: 0.75rem;
+.parking-map-pin__core::after {
+  content: "";
+  position: absolute;
+  inset: 5px;
+  border-radius: 50%;
   background: #ffffff;
-  transition: all 0.2s ease;
 }
 
-.btn-outline-theme:hover {
-  background-color: #f39c12;
-  border-color: #f39c12;
-  color: #ffffff;
+.parking-map-pin__pulse {
+  position: absolute;
+  left: 50%;
+  top: 18px;
+  width: 26px;
+  height: 26px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: rgba(20, 159, 232, 0.18);
+  animation: map-pulse 2.4s ease-in-out infinite;
 }
 
-/* Hide scrollbar for tabs */
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
+.parking-map-pin.active .parking-map-pin__core {
+  transform: translateX(-50%) rotate(45deg) scale(1.2);
+  background: #0b1f33;
 }
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+
+@keyframes map-pulse {
+  0%, 100% { transform: translateX(-50%) scale(0.9); opacity: 0.25; }
+  50%       { transform: translateX(-50%) scale(1.3); opacity: 0.7; }
 }
+
+/* Scrollbar hide */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }

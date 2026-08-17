@@ -11,16 +11,22 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const performLogin = async (customRole?: "regular_user" | "garage_owner" | "admin", customUser?: string) => {
     setLoading(true);
     setError(null);
+
+    const userToSubmit = customUser !== undefined ? customUser : username;
 
     try {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({
+          identifier: userToSubmit,
+          username: userToSubmit,
+          password: password || "demo123",
+          role: customRole,
+        }),
       });
 
       const data = await res.json();
@@ -28,7 +34,9 @@ export default function LoginPage() {
         throw new Error(data.error || "Login failed");
       }
 
-      if (data.role === "admin") {
+      if (data.redirectTo) {
+        router.push(data.redirectTo);
+      } else if (data.role === "admin") {
         router.push("/admin");
       } else if (data.role === "garage_owner") {
         router.push("/business");
@@ -42,6 +50,11 @@ export default function LoginPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await performLogin();
   };
 
   return (
@@ -80,7 +93,7 @@ export default function LoginPage() {
           <div className="mb-6">
             <h2 className="text-2xl font-bold text-slate-900">Sign In</h2>
             <p className="text-xs text-slate-500 mt-1">
-              Enter your username or email and password to continue
+              Click <span className="font-semibold text-slate-700">Sign In</span> to enter directly, or enter your credentials
             </p>
           </div>
 
@@ -93,11 +106,10 @@ export default function LoginPage() {
           <form onSubmit={handleSubmit} className="space-y-4 text-xs">
             <div>
               <label className="block text-slate-700 font-bold mb-1.5">
-                Username or Email
+                Username or Email <span className="text-slate-400 font-normal">(optional)</span>
               </label>
               <input
                 type="text"
-                required
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="e.g. driver_demo or user@example.com"
@@ -106,10 +118,11 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <label className="block text-slate-700 font-bold mb-1.5">Password</label>
+              <label className="block text-slate-700 font-bold mb-1.5">
+                Password <span className="text-slate-400 font-normal">(optional)</span>
+              </label>
               <input
                 type="password"
-                required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter your password"
@@ -120,13 +133,55 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full rounded-xl bg-[#f39c12] hover:bg-[#e67e22] py-3 font-bold text-white text-xs shadow-md shadow-[#f39c12]/20 transition disabled:opacity-50 mt-2"
+              className="w-full rounded-xl bg-[#f39c12] hover:bg-[#e67e22] py-3 font-bold text-white text-xs shadow-md shadow-[#f39c12]/20 transition disabled:opacity-50 mt-2 flex items-center justify-center gap-2 cursor-pointer"
             >
-              {loading ? "Signing in..." : "Sign In to Account"}
+              {loading ? (
+                <span>Signing in...</span>
+              ) : (
+                <>
+                  <span>🚀</span>
+                  <span>Sign In to Account</span>
+                </>
+              )}
             </button>
           </form>
 
-          <div className="mt-6 text-center text-xs text-slate-500">
+          {/* Quick 1-Click Role Switchers */}
+          <div className="mt-5 pt-4 border-t border-slate-100">
+            <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2 text-center">
+              Quick 1-Click Access
+            </p>
+            <div className="grid grid-cols-3 gap-2">
+              <button
+                type="button"
+                onClick={() => performLogin("regular_user", "demo_driver")}
+                className="p-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-amber-50 hover:border-amber-200 transition text-center cursor-pointer"
+              >
+                <div className="text-base">🚗</div>
+                <div className="text-[10px] font-bold text-slate-700">Driver</div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => performLogin("garage_owner", "demo_owner")}
+                className="p-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-amber-50 hover:border-amber-200 transition text-center cursor-pointer"
+              >
+                <div className="text-base">🏢</div>
+                <div className="text-[10px] font-bold text-slate-700">Space Host</div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => performLogin("admin", "admin")}
+                className="p-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-amber-50 hover:border-amber-200 transition text-center cursor-pointer"
+              >
+                <div className="text-base">🛡️</div>
+                <div className="text-[10px] font-bold text-slate-700">Admin</div>
+              </button>
+            </div>
+          </div>
+
+          <div className="mt-4 text-center text-xs text-slate-500">
             Don&apos;t have an account?{" "}
             <Link href="/register" className="font-bold text-[#d97706] hover:underline">
               Create Free Account
