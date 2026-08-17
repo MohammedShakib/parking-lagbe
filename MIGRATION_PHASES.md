@@ -9,9 +9,18 @@ This file is the source of truth for phase tracking. Each completed phase should
 - [x] Phase 3: Implement authentication and user/role model with Supabase Auth.
 - [x] Phase 4: Migrate regular user flows: home/search, vehicles, bookings, payments history.
 - [x] Phase 5: Migrate business owner dashboard: garages, schedules, booking management, income.
-- [x] Phase 6: Migrate admin dashboard: verification, users, garages, payments, commissions, analytics.
-- [ ] Phase 7: Upload/storage migration and deployment configuration.
+- [x] Phase 7: Upload/storage migration and deployment configuration.
 - [ ] Phase 8: End-to-end verification, cleanup, and legacy PHP retirement.
+
+## Phase 7 Notes
+
+Completed:
+
+- Created `supabase/migrations/0006_storage_buckets.sql` initializing storage buckets (`garage-images`, `avatars`, `verification-documents`) with fine-grained Postgres RLS storage policies.
+- Implemented `/api/upload` route handler supporting MIME validation, file size limits (<5MB), unique filename generation, and Supabase Storage uploads.
+- Configured Next.js image domain optimization (`images.unsplash.com`, `*.supabase.co`, `placehold.co`) and `output: "standalone"` in `frontend/next.config.ts`.
+- Created multi-stage production `Dockerfile` and `.dockerignore` for containerized hosting.
+- Added `frontend/.env.production.example` and `DEPLOYMENT.md` production deployment guide.
 
 ## Phase 1 Notes
 

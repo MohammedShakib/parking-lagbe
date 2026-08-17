@@ -1,0 +1,10 @@
+node_modules
+.next
+.git
+.agents
+.gemini
+*.log
+npm-debug.log*
+.env*.local
+supabase/.temp
+*.sql
