@@ -134,14 +134,14 @@ export function GaragePortfolio({ onSelectGarageForSchedule }: GaragePortfolioPr
     <div>
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6">
         <div>
-          <h2 className="text-xl font-bold text-white">Garage & Parking Spaces Portfolio</h2>
-          <p className="text-xs text-neutral-400">
+          <h2 className="text-xl font-bold text-slate-900">Garage & Parking Spaces Portfolio</h2>
+          <p className="text-xs text-slate-500">
             Manage your registered parking lots, capacity limits, hourly rates, and live status.
           </p>
         </div>
         <button
           onClick={() => setShowAddModal(true)}
-          className="rounded-xl bg-[#f39c12] hover:bg-[#e67e22] text-white px-5 py-2.5 text-xs font-bold transition shadow-lg shadow-[#f39c12]/25"
+          className="rounded-xl bg-[#f39c12] hover:bg-[#e67e22] text-white px-5 py-2.5 text-xs font-bold transition shadow-md shadow-[#f39c12]/20"
         >
           + Add New Parking Space
         </button>
@@ -150,21 +150,21 @@ export function GaragePortfolio({ onSelectGarageForSchedule }: GaragePortfolioPr
       {loading ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-64 animate-pulse rounded-2xl border border-neutral-800 bg-neutral-900/50" />
+            <div key={i} className="h-64 animate-pulse rounded-2xl border border-slate-200 bg-slate-100" />
           ))}
         </div>
       ) : garages.length === 0 ? (
-        <div className="rounded-2xl border border-neutral-800 bg-neutral-900/40 p-12 text-center">
+        <div className="rounded-3xl border border-slate-200 bg-white p-12 text-center shadow-sm">
           <div className="text-4xl mb-3">🏢</div>
-          <h3 className="text-base font-bold text-white">No parking spaces listed yet</h3>
-          <p className="mt-1 text-xs text-neutral-400">
-            List your residential or commercial parking slots to start receiving bookings and earnings.
+          <h3 className="text-base font-bold text-slate-900">No parking spaces listed yet</h3>
+          <p className="mt-1 text-xs text-slate-500">
+            Add your first residential or commercial parking lot to start receiving bookings.
           </p>
           <button
             onClick={() => setShowAddModal(true)}
-            className="mt-4 rounded-xl bg-teal-400 px-4 py-2 text-xs font-bold text-neutral-950 hover:bg-teal-300"
+            className="mt-4 rounded-xl bg-[#f39c12] hover:bg-[#e67e22] text-white px-5 py-2 text-xs font-bold shadow-md shadow-[#f39c12]/20 transition"
           >
-            Register Your First Space
+            + Add Parking Space Now
           </button>
         </div>
       ) : (
@@ -176,7 +176,7 @@ export function GaragePortfolio({ onSelectGarageForSchedule }: GaragePortfolioPr
             return (
               <div
                 key={garage.garage_id}
-                className="flex flex-col justify-between rounded-2xl bg-black/50 backdrop-blur-md border border-white/20 p-5 shadow-xl hover:border-[#f39c12]/50 transition"
+                className="flex flex-col justify-between rounded-2xl bg-white border border-slate-200 p-5 shadow-sm hover:shadow-md hover:border-[#f39c12]/50 transition"
               >
                 <div>
                   <div className="flex items-center justify-between gap-2 mb-3">
@@ -184,55 +184,55 @@ export function GaragePortfolio({ onSelectGarageForSchedule }: GaragePortfolioPr
                       <span
                         className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold border ${
                           isClosed
-                            ? "bg-red-500/20 text-red-400 border-red-500/30"
-                            : "bg-emerald-500/20 text-emerald-400 border-emerald-500/30"
+                            ? "bg-rose-50 text-rose-700 border-rose-200"
+                            : "bg-emerald-50 text-emerald-700 border-emerald-200"
                         }`}
                       >
                         {isClosed ? "Closed (Override)" : "Active & Open"}
                       </span>
                       {is24_7 && (
-                        <span className="rounded-full bg-blue-500/20 px-2 py-0.5 text-[10px] font-semibold text-blue-300 border border-blue-500/30">
+                        <span className="rounded-full bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 text-[10px] font-semibold">
                           24/7
                         </span>
                       )}
                     </div>
 
-                    <div className="text-xs font-bold text-amber-400">
+                    <div className="text-xs font-bold text-amber-500">
                       ★ {garage.summary?.average_rating || 5.0}
                     </div>
                   </div>
 
-                  <h3 className="text-base font-bold text-white">{garage.parking_space_name}</h3>
-                  <p className="mt-1 text-xs text-white/70">📍 {garage.parking_lot_address}</p>
+                  <h3 className="text-base font-bold text-slate-900">{garage.parking_space_name}</h3>
+                  <p className="mt-1 text-xs text-slate-500">📍 {garage.parking_lot_address}</p>
 
-                  {/* Stats Grid */}
-                  <div className="mt-4 grid grid-cols-2 gap-2 rounded-xl bg-black/40 border border-white/10 p-3 text-xs">
+                  {/* Stats Grid in White Theme */}
+                  <div className="mt-4 grid grid-cols-2 gap-2 rounded-xl bg-slate-50 border border-slate-100 p-3 text-xs">
                     <div>
-                      <div className="text-[10px] uppercase text-white/60">Total Capacity</div>
-                      <div className="font-bold text-white mt-0.5">{garage.parking_capacity} Slots</div>
+                      <div className="text-[10px] uppercase text-slate-400 font-semibold">Total Capacity</div>
+                      <div className="font-bold text-slate-900 mt-0.5">{garage.parking_capacity} Slots</div>
                     </div>
                     <div>
-                      <div className="text-[10px] uppercase text-white/60">Hourly Rate</div>
-                      <div className="font-bold text-[#f39c12] mt-0.5">৳{garage.price_per_hour.toFixed(2)}/hr</div>
+                      <div className="text-[10px] uppercase text-slate-400 font-semibold">Hourly Rate</div>
+                      <div className="font-bold text-[#d97706] mt-0.5">৳{garage.price_per_hour.toFixed(2)}/hr</div>
                     </div>
                     <div>
-                      <div className="text-[10px] uppercase text-white/60">Type</div>
-                      <div className="font-medium text-white/90 mt-0.5">{garage.parking_type}</div>
+                      <div className="text-[10px] uppercase text-slate-400 font-semibold">Type</div>
+                      <div className="font-medium text-slate-700 mt-0.5">{garage.parking_type}</div>
                     </div>
                     <div>
-                      <div className="text-[10px] uppercase text-white/60">Safety Verification</div>
-                      <div className="font-medium text-amber-400 mt-0.5">
+                      <div className="text-[10px] uppercase text-slate-400 font-semibold">Verification</div>
+                      <div className="font-medium text-amber-600 mt-0.5">
                         {garage.is_verified ? "Verified ✓" : "Pending Review"}
                       </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="mt-5 border-t border-white/10 pt-4 flex gap-2">
+                <div className="mt-5 border-t border-slate-100 pt-4 flex gap-2">
                   {onSelectGarageForSchedule && (
                     <button
                       onClick={() => onSelectGarageForSchedule(garage)}
-                      className="flex-1 rounded-xl bg-white/10 hover:bg-[#f39c12] hover:text-white py-2 text-xs font-bold text-white transition border border-white/15"
+                      className="flex-1 rounded-xl bg-slate-100 hover:bg-[#f39c12] hover:text-white py-2 text-xs font-bold text-slate-700 transition border border-slate-200"
                     >
                       ⚡ Timing & Schedule Controls
                     </button>
@@ -244,151 +244,156 @@ export function GaragePortfolio({ onSelectGarageForSchedule }: GaragePortfolioPr
         </div>
       )}
 
-      {/* Add Garage Modal */}
+      {/* Add Garage Modal in White Theme */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
-          <div className="relative w-full max-w-lg rounded-2xl border border-neutral-800 bg-neutral-900 p-6 shadow-2xl">
-            <button
-              onClick={() => setShowAddModal(false)}
-              className="absolute right-4 top-4 rounded-full p-2 text-neutral-400 hover:bg-neutral-800 hover:text-white"
-            >
-              ✕
-            </button>
-
-            <h3 className="text-lg font-bold text-white mb-1">Add New Parking Space</h3>
-            <p className="text-xs text-neutral-400 mb-4">
-              Register a new parking location to start receiving customer bookings.
-            </p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn">
+          <div className="w-full max-w-lg rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h3 className="text-base font-bold text-slate-900">List New Parking Facility</h3>
+              <button
+                onClick={() => setShowAddModal(false)}
+                className="w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:text-slate-900 flex items-center justify-center font-bold"
+              >
+                ✕
+              </button>
+            </div>
 
             {error && (
-              <div className="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-xs text-red-300">
-                {error}
+              <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-xs text-red-700">
+                ⚠️ {error}
               </div>
             )}
 
-            <form onSubmit={handleAddGarage} className="space-y-3">
+            <form onSubmit={handleAddGarage} className="space-y-3.5 text-xs">
               <div>
-                <label className="block text-xs font-medium text-neutral-400 mb-1">
-                  Parking Space / Garage Name
-                </label>
+                <label className="block text-slate-700 font-bold mb-1">Facility / Garage Name *</label>
                 <input
                   type="text"
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. Green Valley Parking Zone"
-                  className="w-full rounded-xl border border-neutral-800 bg-neutral-950 px-3.5 py-2.5 text-xs text-white outline-none focus:border-teal-500"
+                  placeholder="e.g. Banani Safe Covered Parking"
+                  className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-slate-900 outline-none focus:border-[#f39c12]"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-neutral-400 mb-1">Address & Area</label>
+                <label className="block text-slate-700 font-bold mb-1">Detailed Street Address *</label>
                 <input
                   type="text"
                   required
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
-                  placeholder="e.g. Road 11, Banani, Dhaka"
-                  className="w-full rounded-xl border border-neutral-800 bg-neutral-950 px-3.5 py-2.5 text-xs text-white outline-none focus:border-teal-500"
+                  placeholder="e.g. House 42, Road 11, Block D, Banani, Dhaka"
+                  className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-slate-900 outline-none focus:border-[#f39c12]"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-neutral-400 mb-1">Parking Type</label>
+                  <label className="block text-slate-700 font-bold mb-1">Parking Type</label>
                   <select
                     value={type}
                     onChange={(e) => setType(e.target.value)}
-                    className="w-full rounded-xl border border-neutral-800 bg-neutral-950 px-3 py-2 text-xs text-white outline-none focus:border-teal-500"
+                    className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-slate-900 outline-none focus:border-[#f39c12]"
                   >
-                    <option value="Indoor">Indoor Garage</option>
-                    <option value="Covered">Covered Lot</option>
-                    <option value="Outdoor">Outdoor Space</option>
+                    <option value="Indoor">Indoor / Covered</option>
+                    <option value="Basement">Basement Garage</option>
+                    <option value="Outdoor">Outdoor / Open Lot</option>
+                    <option value="Rooftop">Rooftop Facility</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-neutral-400 mb-1">Dimensions</label>
+                  <label className="block text-slate-700 font-bold mb-1">Dimensions</label>
                   <input
                     type="text"
                     value={dimensions}
                     onChange={(e) => setDimensions(e.target.value)}
-                    placeholder="e.g. Standard (Sedan/SUV)"
-                    className="w-full rounded-xl border border-neutral-800 bg-neutral-950 px-3 py-2 text-xs text-white outline-none focus:border-teal-500"
+                    placeholder="Standard (Car & SUV)"
+                    className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-slate-900 outline-none focus:border-[#f39c12]"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-neutral-400 mb-1">Total Capacity (Slots)</label>
+                  <label className="block text-slate-700 font-bold mb-1">Total Capacity (Slots) *</label>
                   <input
                     type="number"
                     min="1"
                     required
                     value={capacity}
                     onChange={(e) => setCapacity(e.target.value)}
-                    className="w-full rounded-xl border border-neutral-800 bg-neutral-950 px-3 py-2 text-xs text-white outline-none focus:border-teal-500"
+                    className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-slate-900 outline-none focus:border-[#f39c12]"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-neutral-400 mb-1">Price Per Hour (৳)</label>
+                  <label className="block text-slate-700 font-bold mb-1">Price Per Hour (৳) *</label>
                   <input
                     type="number"
                     min="10"
                     required
                     value={price}
                     onChange={(e) => setPrice(e.target.value)}
-                    className="w-full rounded-xl border border-neutral-800 bg-neutral-950 px-3 py-2 text-xs text-white outline-none focus:border-teal-500"
+                    className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-slate-900 outline-none focus:border-[#f39c12]"
                   />
                 </div>
               </div>
 
-              {/* Schedule 24/7 */}
-              <div className="rounded-xl border border-neutral-800 bg-neutral-950 p-3 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-white">24/7 Operating Hours</span>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={is24_7}
-                      onChange={(e) => setIs24_7(e.target.checked)}
-                      className="sr-only peer"
-                    />
-                    <div className="w-9 h-5 bg-neutral-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-teal-500"></div>
+              <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="modal247"
+                    checked={is24_7}
+                    onChange={(e) => setIs24_7(e.target.checked)}
+                    className="w-4 h-4 accent-[#f39c12]"
+                  />
+                  <label htmlFor="modal247" className="text-xs font-bold text-slate-900">
+                    Open 24 Hours / 7 Days a Week
                   </label>
                 </div>
 
                 {!is24_7 && (
-                  <div className="grid grid-cols-2 gap-2 pt-2">
+                  <div className="grid grid-cols-2 gap-3 pt-2">
                     <div>
-                      <label className="block text-[10px] text-neutral-400 mb-1">Opening Time</label>
+                      <label className="block text-slate-500 text-[11px] mb-1">Opening Time</label>
                       <input
                         type="time"
                         value={openingTime}
                         onChange={(e) => setOpeningTime(e.target.value)}
-                        className="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-2.5 py-1.5 text-xs text-white"
+                        className="w-full rounded-xl border border-slate-300 bg-white px-2.5 py-1.5 text-slate-900"
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] text-neutral-400 mb-1">Closing Time</label>
+                      <label className="block text-slate-500 text-[11px] mb-1">Closing Time</label>
                       <input
                         type="time"
                         value={closingTime}
                         onChange={(e) => setClosingTime(e.target.value)}
-                        className="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-2.5 py-1.5 text-xs text-white"
+                        className="w-full rounded-xl border border-slate-300 bg-white px-2.5 py-1.5 text-slate-900"
                       />
                     </div>
                   </div>
                 )}
               </div>
 
-              <button
-                type="submit"
-                disabled={submitting}
-                className="w-full rounded-xl bg-gradient-to-r from-teal-400 to-emerald-500 py-3 text-xs font-bold text-neutral-950 shadow-lg shadow-teal-500/20 hover:opacity-95 disabled:opacity-50 mt-4"
-              >
-                {submitting ? "Registering Space..." : "Register Parking Space 🅿️"}
-              </button>
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowAddModal(false)}
+                  className="flex-1 rounded-xl border border-slate-300 bg-white py-2.5 font-semibold text-slate-700 hover:bg-slate-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="flex-1 rounded-xl bg-[#f39c12] hover:bg-[#e67e22] py-2.5 font-bold text-white shadow-md shadow-[#f39c12]/20 transition disabled:opacity-50"
+                >
+                  {submitting ? "Listing..." : "Register Facility"}
+                </button>
+              </div>
             </form>
           </div>
         </div>

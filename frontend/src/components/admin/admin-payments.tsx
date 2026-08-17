@@ -5,12 +5,12 @@ import { useEffect, useState } from "react";
 interface AdminPaymentItem {
   payment_id: number;
   booking_id: number;
-  username: string;
-  payment_method: string;
-  amount: number;
-  payment_status: "pending" | "paid" | "refunded";
   transaction_id: string | null;
+  amount: number;
+  payment_method: string;
+  payment_status: string;
   payment_date: string;
+  points_used: number;
   garage_id: string;
   license_plate: string;
   duration: number;
@@ -28,9 +28,9 @@ export function AdminPayments() {
     async function load() {
       try {
         const res = await fetch("/api/admin/payments");
-        const data = await res.json();
-        if (!ignore && data.payments) {
-          setPayments(data.payments);
+        const json = await res.json();
+        if (!ignore && json.success) {
+          setPayments(json.payments || []);
         }
       } catch {
         // Handled
@@ -45,63 +45,86 @@ export function AdminPayments() {
   }, []);
 
   return (
-    <div>
-      <div className="mb-6">
-        <h2 className="text-xl font-bold text-white">Platform Payments & Commission Audit</h2>
-        <p className="text-xs text-neutral-400">
-          Complete ledger of driver payments, transaction reference IDs, and financial splits.
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-xl font-bold text-slate-900">Complete Platform Financial Audit Ledger</h2>
+        <p className="text-xs text-slate-500">
+          Immutable payment transaction logs with platform 30% profit and host 70% payout breakdowns.
         </p>
       </div>
 
       {loading ? (
-        <div className="h-64 animate-pulse rounded-2xl border border-neutral-800 bg-neutral-900/50" />
+        <div className="h-64 rounded-3xl bg-slate-100 border border-slate-200 animate-pulse" />
       ) : payments.length === 0 ? (
-        <div className="rounded-2xl border border-neutral-800 bg-neutral-900/40 p-12 text-center text-xs text-neutral-500">
-          No payments recorded in the system yet.
+        <div className="rounded-3xl border border-slate-200 bg-white p-12 text-center shadow-sm">
+          <p className="text-xs text-slate-500">No transaction records found.</p>
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-2xl border border-neutral-800 bg-neutral-900/60 shadow-xl">
-          <table className="w-full text-left text-xs">
-            <thead className="border-b border-neutral-800 bg-neutral-950 text-neutral-400 uppercase tracking-wider text-[10px]">
+        <div className="overflow-x-auto rounded-3xl border border-slate-200 bg-white shadow-sm">
+          <table className="w-full text-left text-xs text-slate-800">
+            <thead className="border-b border-slate-200 bg-slate-50 uppercase text-[10px] text-slate-500 tracking-wider">
               <tr>
-                <th className="px-4 py-3">Txn & Booking</th>
-                <th className="px-4 py-3">Customer</th>
-                <th className="px-4 py-3">Method</th>
-                <th className="px-4 py-3">Gross Total</th>
-                <th className="px-4 py-3">Host Payout (70%)</th>
-                <th className="px-4 py-3">Platform Share (30%)</th>
-                <th className="px-4 py-3">Date</th>
+                <th className="p-4">Payment ID / Txn</th>
+                <th className="p-4">Booking Ref</th>
+                <th className="p-4">Date & Time</th>
+                <th className="p-4">Method & Vehicle</th>
+                <th className="p-4">Gross Paid</th>
+                <th className="p-4">Platform Share</th>
+                <th className="p-4">Host Payout</th>
+                <th className="p-4 text-right">Status</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-neutral-800 text-neutral-300">
+            <tbody className="divide-y divide-slate-100">
               {payments.map((p) => (
-                <tr key={p.payment_id} className="hover:bg-neutral-800/30 transition">
-                  <td className="px-4 py-3">
-                    <div className="font-mono text-white font-bold">
-                      {p.transaction_id || `TXN_${p.payment_id}`}
-                    </div>
-                    <div className="text-[11px] text-neutral-500">Booking #{p.booking_id}</div>
+                <tr key={p.payment_id} className="hover:bg-slate-50 transition">
+                  <td className="p-4 font-mono">
+                    <div className="font-bold text-slate-900">#PAY-{p.payment_id}</div>
+                    <div className="text-[10px] text-slate-400">{p.transaction_id || "TXN-AUTO"}</div>
                   </td>
-                  <td className="px-4 py-3">
-                    <div className="font-semibold text-white">@{p.username}</div>
-                    <div className="font-mono text-[10px] text-teal-400">{p.license_plate}</div>
+
+                  <td className="p-4 font-mono font-semibold text-slate-700">
+                    #BK-{p.booking_id}
                   </td>
-                  <td className="px-4 py-3">
-                    <span className="rounded-md border border-neutral-800 bg-neutral-950 px-2 py-0.5 text-[10px] uppercase font-bold text-neutral-300">
-                      {p.payment_method}
+
+                  <td className="p-4 text-slate-500">
+                    {new Date(p.payment_date).toLocaleString()}
+                  </td>
+
+                  <td className="p-4">
+                    <div className="capitalize font-semibold text-slate-900">{p.payment_method}</div>
+                    <span className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[10px] font-bold text-slate-700">
+                      {p.license_plate}
                     </span>
                   </td>
-                  <td className="px-4 py-3">
-                    <strong className="text-white">৳{p.amount}</strong>
+
+                  <td className="p-4 font-bold text-slate-900">
+                    ৳{p.amount.toFixed(2)}
                   </td>
-                  <td className="px-4 py-3">
-                    <span className="font-bold text-teal-400">৳{p.owner_profit}</span>
+
+                  <td className="p-4 font-bold text-[#d97706]">
+                    +৳{p.platform_profit.toFixed(2)}
+                    <span className="block text-[10px] text-slate-400 font-normal">
+                      ({p.commission_rate.toFixed(0)}%)
+                    </span>
                   </td>
-                  <td className="px-4 py-3">
-                    <span className="font-bold text-indigo-400">৳{p.platform_profit}</span>
+
+                  <td className="p-4 font-bold text-emerald-600">
+                    ৳{p.owner_profit.toFixed(2)}
+                    <span className="block text-[10px] text-slate-400 font-normal">
+                      ({(100 - p.commission_rate).toFixed(0)}%)
+                    </span>
                   </td>
-                  <td className="px-4 py-3 text-neutral-500 text-[11px]">
-                    {new Date(p.payment_date).toLocaleString()}
+
+                  <td className="p-4 text-right">
+                    <span
+                      className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold border ${
+                        p.payment_status === "paid"
+                          ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                          : "bg-amber-50 text-amber-700 border border-amber-200"
+                      }`}
+                    >
+                      {p.payment_status.toUpperCase()}
+                    </span>
                   </td>
                 </tr>
               ))}

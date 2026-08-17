@@ -143,16 +143,16 @@ export function VehiclesManager() {
 
   return (
     <div className="space-y-6">
-      {/* Header matching myvehicles.php lines 376-387 */}
+      {/* Header in White Theme */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-1">My Vehicles</h2>
-          <p className="text-white/80 text-xs">Manage your vehicles for parking reservations</p>
+          <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-1">My Vehicles</h2>
+          <p className="text-slate-500 text-xs">Manage your vehicles for parking reservations</p>
         </div>
 
         <button
           onClick={handleOpenAddModal}
-          className="rounded-xl bg-[#f39c12] hover:bg-[#e67e22] text-white px-5 py-2.5 text-xs font-bold transition shadow-lg shadow-[#f39c12]/25 flex items-center gap-2"
+          className="rounded-xl bg-[#f39c12] hover:bg-[#e67e22] text-white px-5 py-2.5 text-xs font-bold transition shadow-md shadow-[#f39c12]/20 flex items-center gap-2"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -171,26 +171,26 @@ export function VehiclesManager() {
         </button>
       </div>
 
-      {/* Success Alert matching myvehicles.php line 390 */}
+      {/* Success Alert */}
       {successMessage && (
-        <div className="rounded-xl bg-emerald-500/20 border border-emerald-500/40 p-4 text-xs font-semibold text-emerald-300 flex items-center gap-2">
+        <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-4 text-xs font-semibold text-emerald-800 flex items-center gap-2">
           <span>✓</span>
           <span>{successMessage}</span>
         </div>
       )}
 
-      {/* Vehicles Grid matching myvehicles.php lines 405-455 */}
+      {/* Vehicles Grid in White Theme */}
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-64 animate-pulse rounded-xl bg-black/40 border border-white/10" />
+            <div key={i} className="h-64 animate-pulse rounded-2xl bg-slate-100 border border-slate-200" />
           ))}
         </div>
       ) : vehicles.length === 0 ? (
-        <div className="bg-black/40 backdrop-blur-md rounded-2xl border border-white/15 p-12 text-center shadow-xl">
+        <div className="bg-white rounded-3xl border border-slate-200 p-12 text-center shadow-sm">
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            className="h-16 w-16 mx-auto text-white/30 mb-4"
+            className="h-16 w-16 mx-auto text-slate-300 mb-4"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -201,11 +201,11 @@ export function VehiclesManager() {
             <circle cx="12" cy="12" r="10" />
             <line x1="8" y1="12" x2="16" y2="12" />
           </svg>
-          <h3 className="text-white text-lg font-bold mb-2">No Vehicles Found</h3>
-          <p className="text-white/70 text-xs mb-6">You haven&apos;t added any vehicles to your account yet.</p>
+          <h3 className="text-slate-900 text-lg font-bold mb-2">No Vehicles Found</h3>
+          <p className="text-slate-500 text-xs mb-6">You haven&apos;t added any vehicles to your account yet.</p>
           <button
             onClick={handleOpenAddModal}
-            className="rounded-xl bg-[#f39c12] hover:bg-[#e67e22] text-white px-5 py-2.5 text-xs font-bold transition shadow-lg shadow-[#f39c12]/20"
+            className="rounded-xl bg-[#f39c12] hover:bg-[#e67e22] text-white px-5 py-2.5 text-xs font-bold transition shadow-md shadow-[#f39c12]/20"
           >
             + Add Your First Vehicle
           </button>
@@ -215,14 +215,14 @@ export function VehiclesManager() {
           {vehicles.map((vehicle) => (
             <div
               key={vehicle.license_plate}
-              className="bg-black/50 backdrop-blur-md rounded-2xl border border-white/15 p-6 shadow-xl hover:border-[#f39c12]/50 transition-all flex flex-col justify-between"
+              className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm hover:shadow-md hover:border-[#f39c12]/50 transition-all flex flex-col justify-between"
             >
               <div>
                 <div className="flex justify-between items-start mb-4">
-                  <div className="w-14 h-14 rounded-full bg-[#f39c12]/20 border-2 border-[#f39c12] flex items-center justify-center">
+                  <div className="w-14 h-14 rounded-full bg-amber-50 border-2 border-[#f39c12] flex items-center justify-center">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      className="h-7 w-7 text-[#f39c12]"
+                      className="h-7 w-7 text-[#d97706]"
                       viewBox="0 0 24 24"
                       fill="none"
                       stroke="currentColor"
@@ -236,38 +236,38 @@ export function VehiclesManager() {
                     </svg>
                   </div>
 
-                  <span className="rounded-full bg-white/10 px-2.5 py-0.5 text-[10px] uppercase font-bold text-white/80 border border-white/10">
+                  <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[10px] uppercase font-bold text-slate-700 border border-slate-200">
                     {vehicle.vehicle_type || "Car"}
                   </span>
                 </div>
 
-                <h3 className="text-white text-lg font-bold mb-1">
+                <h3 className="text-slate-900 text-lg font-bold mb-1">
                   {vehicle.make || "Vehicle"} {vehicle.model || ""}
                 </h3>
-                <p className="text-white/70 text-xs mb-4 capitalize">
+                <p className="text-slate-500 text-xs mb-4 capitalize">
                   {vehicle.vehicle_type || "Car"} • {vehicle.color || "Standard Color"}
                 </p>
 
-                {/* License Plate Banner matching myvehicles.php line 443 */}
-                <div className="bg-black/60 rounded-xl p-3 text-center mb-5 border border-white/10">
-                  <p className="text-white/60 text-[10px] uppercase tracking-wider mb-0.5">License Plate</p>
-                  <p className="text-white text-base font-bold tracking-wider font-mono">
+                {/* License Plate Banner in White Theme */}
+                <div className="bg-slate-50 rounded-xl p-3 text-center mb-5 border border-slate-200">
+                  <p className="text-slate-400 text-[10px] uppercase tracking-wider mb-0.5">License Plate</p>
+                  <p className="text-slate-900 text-base font-bold tracking-wider font-mono">
                     {vehicle.license_plate}
                   </p>
                 </div>
               </div>
 
-              {/* Action Buttons matching myvehicles.php line 448 */}
-              <div className="flex gap-2 pt-2 border-t border-white/10">
+              {/* Action Buttons in White Theme */}
+              <div className="flex gap-2 pt-2 border-t border-slate-100">
                 <button
                   onClick={() => handleOpenEditModal(vehicle)}
-                  className="flex-1 rounded-xl bg-[#f39c12] hover:bg-[#e67e22] text-white text-center text-xs font-bold py-2.5 transition shadow"
+                  className="flex-1 rounded-xl bg-[#f39c12] hover:bg-[#e67e22] text-white text-center text-xs font-bold py-2.5 transition shadow-sm"
                 >
                   Edit
                 </button>
                 <button
                   onClick={() => handleDeleteVehicle(vehicle.license_plate)}
-                  className="flex-1 rounded-xl bg-white/10 hover:bg-red-500/20 hover:text-red-300 text-white text-center text-xs font-bold py-2.5 transition border border-white/10"
+                  className="flex-1 rounded-xl bg-slate-100 hover:bg-rose-50 hover:text-rose-700 text-slate-700 text-center text-xs font-bold py-2.5 transition border border-slate-200"
                 >
                   Delete
                 </button>
@@ -277,31 +277,31 @@ export function VehiclesManager() {
         </div>
       )}
 
-      {/* Add / Edit Vehicle Modal */}
+      {/* Add / Edit Vehicle Modal in White Theme */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fadeIn">
-          <div className="w-full max-w-md bg-neutral-900 rounded-2xl border border-white/20 p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-white/10 pb-3">
-              <h3 className="text-base font-bold text-white">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn">
+          <div className="w-full max-w-md bg-white rounded-3xl border border-slate-200 p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h3 className="text-base font-bold text-slate-900">
                 {editingVehicle ? "Edit Vehicle Details" : "Add New Vehicle"}
               </h3>
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="text-white/60 hover:text-white text-lg"
+                className="w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:text-slate-900 flex items-center justify-center font-bold"
               >
                 ✕
               </button>
             </div>
 
             {error && (
-              <div className="rounded-xl border border-red-500/40 bg-red-500/10 p-3 text-xs text-red-300">
+              <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-xs text-red-700">
                 ⚠️ {error}
               </div>
             )}
 
             <form onSubmit={handleSaveVehicle} className="space-y-3 text-xs">
               <div>
-                <label className="block text-white/80 font-semibold mb-1">
+                <label className="block text-slate-700 font-semibold mb-1">
                   License Plate Number *
                 </label>
                 <input
@@ -311,40 +311,40 @@ export function VehiclesManager() {
                   value={licensePlate}
                   onChange={(e) => setLicensePlate(e.target.value)}
                   placeholder="e.g. DHA-D-12-4545"
-                  className="w-full rounded-xl border border-white/15 bg-black/50 px-3.5 py-2.5 text-white placeholder-white/40 outline-none focus:border-[#f39c12] disabled:opacity-50"
+                  className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-slate-900 placeholder:text-slate-400 outline-none focus:border-[#f39c12] disabled:opacity-50"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-white/80 font-semibold mb-1">Make (Brand)</label>
+                  <label className="block text-slate-700 font-semibold mb-1">Make (Brand)</label>
                   <input
                     type="text"
                     value={make}
                     onChange={(e) => setMake(e.target.value)}
                     placeholder="e.g. Toyota"
-                    className="w-full rounded-xl border border-white/15 bg-black/50 px-3.5 py-2.5 text-white placeholder-white/40 outline-none focus:border-[#f39c12]"
+                    className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-slate-900 placeholder:text-slate-400 outline-none focus:border-[#f39c12]"
                   />
                 </div>
                 <div>
-                  <label className="block text-white/80 font-semibold mb-1">Model</label>
+                  <label className="block text-slate-700 font-semibold mb-1">Model</label>
                   <input
                     type="text"
                     value={model}
                     onChange={(e) => setModel(e.target.value)}
                     placeholder="e.g. Corolla / Premio"
-                    className="w-full rounded-xl border border-white/15 bg-black/50 px-3.5 py-2.5 text-white placeholder-white/40 outline-none focus:border-[#f39c12]"
+                    className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-slate-900 placeholder:text-slate-400 outline-none focus:border-[#f39c12]"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-white/80 font-semibold mb-1">Vehicle Type</label>
+                  <label className="block text-slate-700 font-semibold mb-1">Vehicle Type</label>
                   <select
                     value={vehicleType}
                     onChange={(e) => setVehicleType(e.target.value)}
-                    className="w-full rounded-xl border border-white/15 bg-black/50 px-3.5 py-2.5 text-white outline-none focus:border-[#f39c12]"
+                    className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-slate-900 outline-none focus:border-[#f39c12]"
                   >
                     <option value="car">Car / Sedan</option>
                     <option value="suv">SUV / Jeep</option>
@@ -353,13 +353,13 @@ export function VehiclesManager() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-white/80 font-semibold mb-1">Color</label>
+                  <label className="block text-slate-700 font-semibold mb-1">Color</label>
                   <input
                     type="text"
                     value={color}
                     onChange={(e) => setColor(e.target.value)}
                     placeholder="e.g. Pearl White"
-                    className="w-full rounded-xl border border-white/15 bg-black/50 px-3.5 py-2.5 text-white placeholder-white/40 outline-none focus:border-[#f39c12]"
+                    className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-slate-900 placeholder:text-slate-400 outline-none focus:border-[#f39c12]"
                   />
                 </div>
               </div>
@@ -368,14 +368,14 @@ export function VehiclesManager() {
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="flex-1 rounded-xl border border-white/20 bg-white/5 py-2.5 font-semibold text-white hover:bg-white/10 transition"
+                  className="flex-1 rounded-xl border border-slate-300 bg-white py-2.5 font-semibold text-slate-700 hover:bg-slate-50 transition"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={saving}
-                  className="flex-1 rounded-xl bg-[#f39c12] hover:bg-[#e67e22] py-2.5 font-bold text-white shadow-lg shadow-[#f39c12]/20 transition disabled:opacity-50"
+                  className="flex-1 rounded-xl bg-[#f39c12] hover:bg-[#e67e22] py-2.5 font-bold text-white shadow-md shadow-[#f39c12]/20 transition disabled:opacity-50"
                 >
                   {saving ? "Saving..." : "Save Vehicle"}
                 </button>

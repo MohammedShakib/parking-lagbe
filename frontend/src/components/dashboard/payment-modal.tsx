@@ -35,40 +35,36 @@ export function PaymentModal({
     date: string;
   } | null>(null);
 
-  const handleProcessPayment = async (e: React.FormEvent) => {
+  const handlePay = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
     try {
-      const txnId = `${method.toUpperCase()}_TXN_${Date.now().toString(36).toUpperCase()}`;
-
       const res = await fetch("/api/payments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           bookingId,
           paymentMethod: method,
-          transactionId: txnId,
-          amount,
+          accountNumber: method === "card" ? cardNumber : accountNumber,
           pointsUsed,
         }),
       });
 
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error || "Payment failed. Please try again.");
+        throw new Error(data.error || "Payment failed");
       }
 
       setReceipt({
-        transactionId: txnId,
-        pointsEarned: data.points_earned || Math.floor(amount / 10),
+        transactionId: data.transactionId || `TXN-${Date.now()}`,
+        pointsEarned: data.pointsEarned || Math.floor(amount / 10),
         amount,
-        date: new Date().toLocaleString(),
+        date: new Date().toLocaleDateString(),
       });
-      onPaymentSuccess();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Payment error";
+      const msg = err instanceof Error ? err.message : "Error processing payment";
       setError(msg);
     } finally {
       setLoading(false);
@@ -76,217 +72,208 @@ export function PaymentModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
-      <div className="relative w-full max-w-md rounded-2xl border border-neutral-800 bg-neutral-900 p-6 shadow-2xl">
-        {!receipt ? (
-          <>
-            <button
-              onClick={onClose}
-              className="absolute right-4 top-4 rounded-full p-2 text-neutral-400 hover:bg-neutral-800 hover:text-white"
-            >
-              ✕
-            </button>
-
-            <div className="mb-4">
-              <span className="rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-semibold text-emerald-400 border border-emerald-500/30">
-                Secure Checkout Gateway
-              </span>
-              <h2 className="mt-2 text-xl font-bold text-white">Payment for Booking #{bookingId}</h2>
-              <p className="text-xs text-neutral-400">{garageName}</p>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn">
+      <div className="w-full max-w-lg bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-2xl space-y-6">
+        {receipt ? (
+          // Success State in White Theme
+          <div className="space-y-6 text-center">
+            <div className="w-16 h-16 rounded-full bg-emerald-50 border-2 border-emerald-500 text-emerald-600 flex items-center justify-center mx-auto text-3xl font-black shadow-sm">
+              ✓
             </div>
 
-            {/* Amount Summary */}
-            <div className="mb-5 rounded-xl border border-neutral-800 bg-neutral-950 p-4 flex items-center justify-between">
+            <div>
+              <h3 className="text-xl font-bold text-slate-900">Payment Successful!</h3>
+              <p className="text-xs text-slate-500 mt-1">
+                Your parking booking #BK-{bookingId} has been confirmed & settled.
+              </p>
+            </div>
+
+            <div className="bg-slate-50 rounded-2xl p-5 border border-slate-200 text-left text-xs space-y-2.5">
+              <div className="flex justify-between">
+                <span className="text-slate-500">Transaction Ref:</span>
+                <span className="font-mono font-bold text-slate-900">{receipt.transactionId}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Garage:</span>
+                <span className="font-bold text-slate-900">{garageName}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Amount Paid:</span>
+                <span className="font-bold text-[#d97706]">৳{receipt.amount.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Loyalty Points Earned:</span>
+                <span className="font-bold text-emerald-600">+{receipt.pointsEarned} PTS</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Date:</span>
+                <span className="text-slate-800">{receipt.date}</span>
+              </div>
+            </div>
+
+            <button
+              onClick={onPaymentSuccess}
+              className="w-full rounded-xl bg-[#f39c12] hover:bg-[#e67e22] py-3 text-xs font-bold text-white shadow-md shadow-[#f39c12]/20 transition"
+            >
+              Done & Return to Bookings
+            </button>
+          </div>
+        ) : (
+          // Payment Gateway Form in White Theme
+          <>
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
               <div>
-                <div className="text-xs text-neutral-400">Total Payable Amount</div>
-                <div className="text-2xl font-black text-emerald-400">৳{amount}</div>
+                <h3 className="text-lg font-bold text-slate-900">Complete Parking Payment</h3>
+                <p className="text-xs text-slate-500">Booking #BK-{bookingId} • {garageName}</p>
               </div>
-              <div className="text-right text-[11px] text-neutral-400">
-                <div>Points Discount: ৳{pointsUsed}</div>
-                <div className="text-amber-400">Reward: +{Math.floor(amount / 10)} pts</div>
-              </div>
+              <button
+                onClick={onClose}
+                className="w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:text-slate-900 flex items-center justify-center font-bold"
+              >
+                ✕
+              </button>
             </div>
 
             {error && (
-              <div className="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-xs text-red-300">
-                {error}
+              <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-xs text-red-700 font-semibold">
+                ⚠️ {error}
               </div>
             )}
 
-            {/* Method Tabs */}
-            <div className="mb-4 grid grid-cols-4 gap-1.5 rounded-xl border border-neutral-800 bg-neutral-950 p-1">
-              <button
-                type="button"
-                onClick={() => setMethod("bkash")}
-                className={`rounded-lg py-2 text-xs font-semibold transition ${
-                  method === "bkash"
-                    ? "bg-[#D12053] text-white shadow-sm"
-                    : "text-neutral-400 hover:text-white"
-                }`}
-              >
-                bKash
-              </button>
-              <button
-                type="button"
-                onClick={() => setMethod("nagad")}
-                className={`rounded-lg py-2 text-xs font-semibold transition ${
-                  method === "nagad"
-                    ? "bg-[#F7931E] text-white shadow-sm"
-                    : "text-neutral-400 hover:text-white"
-                }`}
-              >
-                Nagad
-              </button>
-              <button
-                type="button"
-                onClick={() => setMethod("card")}
-                className={`rounded-lg py-2 text-xs font-semibold transition ${
-                  method === "card"
-                    ? "bg-neutral-700 text-white shadow-sm"
-                    : "text-neutral-400 hover:text-white"
-                }`}
-              >
-                Card
-              </button>
-              <button
-                type="button"
-                onClick={() => setMethod("points")}
-                className={`rounded-lg py-2 text-xs font-semibold transition ${
-                  method === "points"
-                    ? "bg-amber-600 text-white shadow-sm"
-                    : "text-neutral-400 hover:text-white"
-                }`}
-              >
-                Points
-              </button>
+            {/* Payment Method Selector */}
+            <div>
+              <label className="block text-slate-700 font-bold mb-2 text-xs">
+                Select Payment Method
+              </label>
+              <div className="grid grid-cols-3 gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setMethod("bkash")}
+                  className={`p-3 rounded-2xl border text-center transition ${
+                    method === "bkash"
+                      ? "border-[#f39c12] bg-amber-50 text-[#d97706] font-bold shadow-sm"
+                      : "border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-medium"
+                  }`}
+                >
+                  <div className="text-sm font-bold">bKash</div>
+                  <div className="text-[10px] text-slate-400 mt-0.5">MFS Payment</div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setMethod("nagad")}
+                  className={`p-3 rounded-2xl border text-center transition ${
+                    method === "nagad"
+                      ? "border-[#f39c12] bg-amber-50 text-[#d97706] font-bold shadow-sm"
+                      : "border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-medium"
+                  }`}
+                >
+                  <div className="text-sm font-bold">Nagad</div>
+                  <div className="text-[10px] text-slate-400 mt-0.5">MFS Payment</div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setMethod("card")}
+                  className={`p-3 rounded-2xl border text-center transition ${
+                    method === "card"
+                      ? "border-[#f39c12] bg-amber-50 text-[#d97706] font-bold shadow-sm"
+                      : "border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-medium"
+                  }`}
+                >
+                  <div className="text-sm font-bold">Card</div>
+                  <div className="text-[10px] text-slate-400 mt-0.5">Visa / Master</div>
+                </button>
+              </div>
             </div>
 
-            <form onSubmit={handleProcessPayment} className="space-y-3">
-              {(method === "bkash" || method === "nagad") && (
+            <form onSubmit={handlePay} className="space-y-4 text-xs">
+              {method === "card" ? (
                 <>
                   <div>
-                    <label className="block text-xs font-medium text-neutral-400 mb-1">
-                      {method === "bkash" ? "bKash" : "Nagad"} Account Number
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={accountNumber}
-                      onChange={(e) => setAccountNumber(e.target.value)}
-                      placeholder="01XXXXXXXXX"
-                      className="w-full rounded-xl border border-neutral-800 bg-neutral-950 px-3.5 py-2.5 text-xs text-white outline-none focus:border-emerald-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-neutral-400 mb-1">Account PIN</label>
-                    <input
-                      type="password"
-                      required
-                      value={pin}
-                      onChange={(e) => setPin(e.target.value)}
-                      placeholder="•••••"
-                      className="w-full rounded-xl border border-neutral-800 bg-neutral-950 px-3.5 py-2.5 text-xs text-white outline-none focus:border-emerald-500"
-                    />
-                  </div>
-                </>
-              )}
-
-              {method === "card" && (
-                <>
-                  <div>
-                    <label className="block text-xs font-medium text-neutral-400 mb-1">Card Number</label>
+                    <label className="block text-slate-700 font-bold mb-1">Card Number</label>
                     <input
                       type="text"
                       required
                       value={cardNumber}
                       onChange={(e) => setCardNumber(e.target.value)}
-                      placeholder="4111 2222 3333 4444"
-                      className="w-full rounded-xl border border-neutral-800 bg-neutral-950 px-3.5 py-2.5 text-xs text-white outline-none focus:border-emerald-500"
+                      className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-slate-900 font-mono outline-none focus:border-[#f39c12]"
                     />
                   </div>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-xs font-medium text-neutral-400 mb-1">Expiry</label>
+                      <label className="block text-slate-700 font-bold mb-1">Expiry (MM/YY)</label>
                       <input
                         type="text"
                         required
                         value={cardExpiry}
                         onChange={(e) => setCardExpiry(e.target.value)}
-                        placeholder="MM/YY"
-                        className="w-full rounded-xl border border-neutral-800 bg-neutral-950 px-3.5 py-2.5 text-xs text-white outline-none focus:border-emerald-500"
+                        className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-slate-900 font-mono outline-none focus:border-[#f39c12]"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-neutral-400 mb-1">CVV</label>
+                      <label className="block text-slate-700 font-bold mb-1">CVV</label>
                       <input
                         type="password"
                         required
                         value={cardCvv}
                         onChange={(e) => setCardCvv(e.target.value)}
-                        placeholder="123"
-                        className="w-full rounded-xl border border-neutral-800 bg-neutral-950 px-3.5 py-2.5 text-xs text-white outline-none focus:border-emerald-500"
+                        className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-slate-900 font-mono outline-none focus:border-[#f39c12]"
                       />
                     </div>
                   </div>
                 </>
+              ) : (
+                <>
+                  <div>
+                    <label className="block text-slate-700 font-bold mb-1">
+                      {method.toUpperCase()} Mobile Account Number
+                    </label>
+                    <input
+                      type="tel"
+                      required
+                      value={accountNumber}
+                      onChange={(e) => setAccountNumber(e.target.value)}
+                      className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-slate-900 font-mono outline-none focus:border-[#f39c12]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-700 font-bold mb-1">Account PIN</label>
+                    <input
+                      type="password"
+                      required
+                      value={pin}
+                      onChange={(e) => setPin(e.target.value)}
+                      className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-slate-900 font-mono outline-none focus:border-[#f39c12]"
+                    />
+                  </div>
+                </>
               )}
 
-              {method === "points" && (
-                <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 text-xs text-neutral-300">
-                  <p className="leading-relaxed">
-                    Full payment using accumulated loyalty points. 1 Point = 1 BDT.
-                  </p>
-                </div>
-              )}
+              {/* Total Summary Banner */}
+              <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200 flex justify-between items-baseline">
+                <span className="font-bold text-slate-900">Total Amount:</span>
+                <span className="text-xl font-black text-[#d97706]">৳{amount.toFixed(2)}</span>
+              </div>
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 py-3 text-xs font-bold text-neutral-950 shadow-lg shadow-emerald-500/20 transition hover:opacity-95 disabled:opacity-50 mt-3"
-              >
-                {loading ? "Confirming Transaction..." : `Pay ৳${amount} via ${method.toUpperCase()}`}
-              </button>
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="flex-1 rounded-xl border border-slate-300 bg-white py-3 font-semibold text-slate-700 hover:bg-slate-50 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="flex-1 rounded-xl bg-[#f39c12] hover:bg-[#e67e22] py-3 font-bold text-white shadow-md shadow-[#f39c12]/20 transition disabled:opacity-50"
+                >
+                  {loading ? "Processing..." : `Pay ৳${amount.toFixed(2)}`}
+                </button>
+              </div>
             </form>
           </>
-        ) : (
-          /* Receipt State */
-          <div className="text-center py-4">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500/20 text-2xl text-emerald-400 border border-emerald-500/30">
-              ✓
-            </div>
-            <h3 className="mt-4 text-lg font-bold text-white">Payment Successful!</h3>
-            <p className="text-xs text-neutral-400">Transaction verified & reservation confirmed.</p>
-
-            <div className="mt-5 rounded-xl border border-neutral-800 bg-neutral-950 p-4 text-left text-xs space-y-2">
-              <div className="flex justify-between text-neutral-400">
-                <span>Booking ID:</span>
-                <span className="font-semibold text-white">#{bookingId}</span>
-              </div>
-              <div className="flex justify-between text-neutral-400">
-                <span>Transaction ID:</span>
-                <span className="font-mono text-emerald-400">{receipt.transactionId}</span>
-              </div>
-              <div className="flex justify-between text-neutral-400">
-                <span>Amount Paid:</span>
-                <span className="font-bold text-white">৳{receipt.amount}</span>
-              </div>
-              <div className="flex justify-between text-neutral-400">
-                <span>Points Earned:</span>
-                <span className="font-semibold text-amber-400">+{receipt.pointsEarned} pts</span>
-              </div>
-              <div className="flex justify-between text-neutral-400">
-                <span>Date:</span>
-                <span>{receipt.date}</span>
-              </div>
-            </div>
-
-            <button
-              onClick={onClose}
-              className="mt-5 w-full rounded-xl bg-emerald-500 py-2.5 text-xs font-semibold text-neutral-950 hover:bg-emerald-400"
-            >
-              Done & View Bookings
-            </button>
-          </div>
         )}
       </div>
     </div>

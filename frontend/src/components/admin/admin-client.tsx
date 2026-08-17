@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import { ProfileWithAccount } from "@/lib/supabase/database.types";
+
 import { AdminAnalytics } from "./admin-analytics";
 import { AdminGarages } from "./admin-garages";
 import { AdminOwners } from "./admin-owners";
@@ -13,66 +14,101 @@ interface AdminClientProps {
   profile: ProfileWithAccount | null;
 }
 
-export function AdminClient({ profile }: AdminClientProps) {
-  const [activeTab, setActiveTab] = useState<"analytics" | "users" | "garages" | "owners" | "payments">("analytics");
+type AdminTab = "analytics" | "users" | "garages" | "owners" | "payments";
 
-  const navItems = [
-    { id: "analytics", label: "Executive Analytics", icon: "📊" },
-    { id: "users", label: "User Verification", icon: "👥" },
-    { id: "garages", label: "Garage Approvals", icon: "🏢" },
-    { id: "owners", label: "Hosts & Commissions", icon: "💼" },
-    { id: "payments", label: "Payments Audit", icon: "💳" },
-  ];
+export function AdminClient({ profile }: AdminClientProps) {
+  const [activeTab, setActiveTab] = useState<AdminTab>("analytics");
 
   return (
     <div className="space-y-6">
-      {/* Admin Banner matching admin.php */}
-      <div className="relative overflow-hidden rounded-2xl bg-black/50 backdrop-blur-md border border-white/20 p-6 sm:p-8 shadow-2xl">
-        <div className="max-w-2xl">
-          <div className="inline-flex items-center gap-2 rounded-full border border-[#f39c12]/40 bg-[#f39c12]/20 px-3.5 py-1 text-xs font-bold text-[#f39c12]">
-            <span>●</span> Super Administrator Governance
+      {/* Header Banner in White Theme */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white rounded-3xl border border-slate-200 p-6 shadow-sm">
+        <div>
+          <div className="inline-flex items-center gap-2 rounded-full border border-purple-200 bg-purple-50 px-3 py-1 text-xs font-bold text-purple-900 mb-2">
+            <span>🛡️</span>
+            <span>Super Administrator Governance</span>
           </div>
-          <h1 className="mt-4 text-2xl font-bold text-white tracking-tight sm:text-3xl drop-shadow-md">
-            Platform Governance Hub
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">
+            Platform Executive Control Hub
           </h1>
-          <p className="mt-2 text-xs sm:text-sm text-white/80 leading-relaxed">
-            Logged in as <span className="text-white font-bold">@{profile?.username}</span> (Super Admin). Oversee security compliance, verify parking garages, audit payments, and adjust revenue commission parameters.
+          <p className="text-xs text-slate-500 mt-1">
+            Logged in as Super Admin (@{profile?.username}). Manage platform finances, host verifications, safety compliance, and audit trails.
           </p>
         </div>
 
-        {/* Global Stats */}
-        <div className="mt-6 flex flex-wrap gap-3">
-          <div className="rounded-xl bg-black/40 border border-white/15 px-4 py-2.5">
-            <div className="text-[10px] uppercase text-white/60">Security Clearance</div>
-            <div className="text-xs font-bold text-emerald-400">Level 3 (Platform Admin)</div>
-          </div>
-          <div className="rounded-xl bg-black/40 border border-white/15 px-4 py-2.5">
-            <div className="text-[10px] uppercase text-white/60">Standard Commission</div>
-            <div className="text-xs font-bold text-[#f39c12]">30.00% Platform Fee</div>
+        <div className="flex items-center gap-3">
+          <div className="bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-center">
+            <span className="text-[10px] uppercase font-bold text-slate-400">Platform Profit Share</span>
+            <div className="text-lg font-black text-[#d97706]">30.0% Commission</div>
           </div>
         </div>
       </div>
 
-      {/* Navigation Tabs */}
-      <div className="flex overflow-x-auto no-scrollbar gap-2 border-b border-white/20 pb-2">
-        {navItems.map((item) => (
-          <button
-            key={item.id}
-            onClick={() => setActiveTab(item.id as typeof activeTab)}
-            className={`flex items-center gap-2 whitespace-nowrap rounded-xl px-4 py-2.5 text-xs font-bold transition ${
-              activeTab === item.id
-                ? "bg-[#f39c12] text-white shadow-lg shadow-[#f39c12]/30"
-                : "border border-white/15 bg-black/40 text-white/80 hover:border-white/30 hover:text-white"
-            }`}
-          >
-            <span>{item.icon}</span>
-            <span>{item.label}</span>
-          </button>
-        ))}
+      {/* Tabs in White Theme */}
+      <div className="flex overflow-x-auto gap-2 p-1.5 bg-white rounded-2xl border border-slate-200 shadow-sm no-scrollbar">
+        <button
+          onClick={() => setActiveTab("analytics")}
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition whitespace-nowrap ${
+            activeTab === "analytics"
+              ? "bg-[#f39c12] text-white shadow-md shadow-[#f39c12]/20"
+              : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+          }`}
+        >
+          <span>📊</span>
+          <span>Platform Analytics</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab("users")}
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition whitespace-nowrap ${
+            activeTab === "users"
+              ? "bg-[#f39c12] text-white shadow-md shadow-[#f39c12]/20"
+              : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+          }`}
+        >
+          <span>👥</span>
+          <span>Registered Users</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab("garages")}
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition whitespace-nowrap ${
+            activeTab === "garages"
+              ? "bg-[#f39c12] text-white shadow-md shadow-[#f39c12]/20"
+              : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+          }`}
+        >
+          <span>🏢</span>
+          <span>Garages & Compliance</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab("owners")}
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition whitespace-nowrap ${
+            activeTab === "owners"
+              ? "bg-[#f39c12] text-white shadow-md shadow-[#f39c12]/20"
+              : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+          }`}
+        >
+          <span>🤝</span>
+          <span>Host Verifications & Rates</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab("payments")}
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition whitespace-nowrap ${
+            activeTab === "payments"
+              ? "bg-[#f39c12] text-white shadow-md shadow-[#f39c12]/20"
+              : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+          }`}
+        >
+          <span>💳</span>
+          <span>Complete Financial Ledger</span>
+        </button>
       </div>
 
-      {/* Active Tab Content */}
-      <div className="pt-2">
+      {/* Tab Panels */}
+      <div>
         {activeTab === "analytics" && <AdminAnalytics />}
         {activeTab === "users" && <AdminUsers />}
         {activeTab === "garages" && <AdminGarages />}

@@ -2,30 +2,28 @@
 
 import { useEffect, useState } from "react";
 
-interface AdminGarage {
+interface AdminGarageItem {
   id: number;
   garage_id: string;
-  username: string;
   parking_space_name: string;
   parking_lot_address: string;
-  parking_type: string | null;
   parking_capacity: number;
-  availability: number;
   price_per_hour: number;
   is_verified: boolean;
-  summary?: {
-    average_rating: number;
-    total_ratings: number;
+  username: string;
+  real_time_status?: {
+    current_status: string;
+    force_closed: boolean;
   };
 }
 
 export function AdminGarages() {
-  const [garages, setGarages] = useState<AdminGarage[]>([]);
+  const [garages, setGarages] = useState<AdminGarageItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   const fetchGarages = async () => {
     try {
+      setLoading(true);
       const res = await fetch("/api/admin/garages");
       const data = await res.json();
       if (data.garages) {
@@ -59,101 +57,109 @@ export function AdminGarages() {
     };
   }, []);
 
-  const handleToggleVerification = async (garageId: string, current: boolean) => {
-    setUpdatingId(garageId);
+  const handleVerify = async (garageId: string, isVerified: boolean) => {
     try {
       const res = await fetch("/api/admin/garages", {
-        method: "PATCH",
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ garageId, isVerified: !current }),
+        body: JSON.stringify({ garageId, isVerified }),
       });
-      if (res.ok) {
-        fetchGarages();
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to update garage verification");
       }
-    } catch {
-      // Handled
-    } finally {
-      setUpdatingId(null);
+
+      fetchGarages();
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : "Error updating garage");
     }
   };
 
   return (
-    <div>
-      <div className="mb-6">
-        <h2 className="text-xl font-bold text-white">Garage Inventory & Safety Verification</h2>
-        <p className="text-xs text-neutral-400">
-          Verify registered parking spots to make them officially discoverable on the driver search map.
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-xl font-bold text-slate-900">Garage Facility Compliance & Safety Approvals</h2>
+        <p className="text-xs text-slate-500">
+          Approve inspected parking spots for public discovery or suspend non-compliant facilities.
         </p>
       </div>
 
       {loading ? (
-        <div className="h-64 animate-pulse rounded-2xl border border-neutral-800 bg-neutral-900/50" />
+        <div className="h-64 rounded-3xl bg-slate-100 border border-slate-200 animate-pulse" />
       ) : garages.length === 0 ? (
-        <div className="rounded-2xl border border-neutral-800 bg-neutral-900/40 p-12 text-center text-xs text-neutral-500">
-          No garages registered on the platform yet.
+        <div className="rounded-3xl border border-slate-200 bg-white p-12 text-center shadow-sm">
+          <p className="text-xs text-slate-500">No garages found.</p>
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {garages.map((g) => (
-            <div
-              key={g.garage_id}
-              className="flex flex-col justify-between rounded-2xl border border-neutral-800 bg-neutral-900/60 p-5 backdrop-blur-xl transition hover:border-neutral-700 shadow-xl"
-            >
-              <div>
-                <div className="flex items-center justify-between gap-2 mb-3">
-                  <span
-                    className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold border ${
-                      g.is_verified
-                        ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
-                        : "bg-amber-500/10 text-amber-400 border-amber-500/30"
-                    }`}
-                  >
-                    {g.is_verified ? "Verified Space ✓" : "Pending Verification"}
-                  </span>
-                  <span className="text-xs font-bold text-amber-400">
-                    ★ {g.summary?.average_rating || 5.0}
-                  </span>
-                </div>
+        <div className="overflow-x-auto rounded-3xl border border-slate-200 bg-white shadow-sm">
+          <table className="w-full text-left text-xs text-slate-800">
+            <thead className="border-b border-slate-200 bg-slate-50 uppercase text-[10px] text-slate-500 tracking-wider">
+              <tr>
+                <th className="p-4">Facility & Location</th>
+                <th className="p-4">Owner Account</th>
+                <th className="p-4">Capacity & Rate</th>
+                <th className="p-4">Live Status</th>
+                <th className="p-4">Safety Compliance</th>
+                <th className="p-4 text-right">Approval Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {garages.map((g) => (
+                <tr key={g.garage_id} className="hover:bg-slate-50 transition">
+                  <td className="p-4">
+                    <div className="font-bold text-slate-900">{g.parking_space_name}</div>
+                    <div className="text-[11px] text-slate-500 truncate max-w-xs">{g.parking_lot_address}</div>
+                  </td>
 
-                <h3 className="text-base font-bold text-white">{g.parking_space_name}</h3>
-                <p className="mt-1 text-xs text-neutral-400">📍 {g.parking_lot_address}</p>
+                  <td className="p-4">
+                    <span className="font-semibold text-slate-900">@{g.username}</span>
+                  </td>
 
-                <div className="mt-4 grid grid-cols-2 gap-2 rounded-xl border border-neutral-800 bg-neutral-950 p-3 text-xs">
-                  <div>
-                    <div className="text-[10px] uppercase text-neutral-500">Host</div>
-                    <div className="font-bold text-white mt-0.5">@{g.username}</div>
-                  </div>
-                  <div>
-                    <div className="text-[10px] uppercase text-neutral-500">Rate</div>
-                    <div className="font-bold text-teal-400 mt-0.5">৳{g.price_per_hour}/hr</div>
-                  </div>
-                  <div>
-                    <div className="text-[10px] uppercase text-neutral-500">Capacity</div>
-                    <div className="font-medium text-neutral-300 mt-0.5">{g.parking_capacity} Slots</div>
-                  </div>
-                  <div>
-                    <div className="text-[10px] uppercase text-neutral-500">Type</div>
-                    <div className="font-medium text-neutral-300 mt-0.5">{g.parking_type}</div>
-                  </div>
-                </div>
-              </div>
+                  <td className="p-4">
+                    <div className="font-bold text-slate-900">{g.parking_capacity} Slots</div>
+                    <div className="text-[11px] text-[#d97706]">৳{g.price_per_hour}/hr</div>
+                  </td>
 
-              <div className="mt-5 flex items-center justify-between border-t border-neutral-800 pt-3">
-                <span className="font-mono text-[11px] text-neutral-500">{g.garage_id}</span>
-                <button
-                  disabled={updatingId === g.garage_id}
-                  onClick={() => handleToggleVerification(g.garage_id, g.is_verified)}
-                  className={`rounded-lg px-3 py-1.5 text-xs font-bold transition ${
-                    g.is_verified
-                      ? "border border-red-500/30 bg-red-500/10 text-red-400 hover:bg-red-500/20"
-                      : "bg-emerald-500 text-neutral-950 hover:bg-emerald-400"
-                  }`}
-                >
-                  {updatingId === g.garage_id ? "..." : g.is_verified ? "Revoke Verification" : "Approve Garage ✓"}
-                </button>
-              </div>
-            </div>
-          ))}
+                  <td className="p-4">
+                    <span className="rounded-full bg-slate-100 text-slate-700 px-2.5 py-0.5 text-[10px] font-bold border border-slate-200">
+                      {g.real_time_status?.force_closed ? "Closed (Override)" : "Active"}
+                    </span>
+                  </td>
+
+                  <td className="p-4">
+                    <span
+                      className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold border ${
+                        g.is_verified
+                          ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                          : "bg-amber-50 text-amber-700 border border-amber-200"
+                      }`}
+                    >
+                      {g.is_verified ? "Approved ✓" : "Pending Inspection"}
+                    </span>
+                  </td>
+
+                  <td className="p-4 text-right space-x-2">
+                    {!g.is_verified ? (
+                      <button
+                        onClick={() => handleVerify(g.garage_id, true)}
+                        className="rounded-xl bg-emerald-600 hover:bg-emerald-700 px-3 py-1.5 text-xs font-bold text-white shadow-sm transition"
+                      >
+                        ✓ Approve Facility
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => handleVerify(g.garage_id, false)}
+                        className="rounded-xl bg-slate-100 hover:bg-rose-50 hover:text-rose-700 px-3 py-1.5 text-xs font-medium text-slate-700 transition border border-slate-200"
+                      >
+                        Suspend
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
     </div>

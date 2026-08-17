@@ -75,14 +75,14 @@ export function ProfileEditor({ initialProfile }: ProfileEditorProps) {
   };
 
   return (
-    <div className="space-y-8 text-white">
+    <div className="space-y-8">
       {/* Alert banner */}
       {message && (
         <div
           className={`rounded-2xl p-4 text-xs font-semibold flex items-center gap-2 ${
             message.type === "success"
-              ? "bg-emerald-500/20 border border-emerald-500/40 text-emerald-300"
-              : "bg-red-500/20 border border-red-500/40 text-red-300"
+              ? "bg-emerald-50 border border-emerald-200 text-emerald-800"
+              : "bg-red-50 border border-red-200 text-red-700"
           }`}
         >
           <span>{message.type === "success" ? "✓" : "⚠️"}</span>
@@ -90,14 +90,14 @@ export function ProfileEditor({ initialProfile }: ProfileEditorProps) {
         </div>
       )}
 
-      {/* Profile Header matching my_profile.php lines 594-636 */}
-      <section className="flex flex-col md:flex-row items-center md:items-start gap-8 bg-black/50 backdrop-blur-md rounded-2xl border border-white/20 p-8 shadow-xl">
-        <div className="w-32 h-32 rounded-full bg-[#f39c12]/20 border-4 border-[#f39c12] overflow-hidden flex items-center justify-center flex-shrink-0 shadow-lg shadow-[#f39c12]/30">
-          <span className="text-5xl font-bold text-[#f39c12]">{firstLetter}</span>
+      {/* Profile Header in White Theme */}
+      <section className="flex flex-col md:flex-row items-center md:items-start gap-8 bg-white rounded-3xl border border-slate-200 p-8 shadow-sm">
+        <div className="w-32 h-32 rounded-full bg-amber-50 border-4 border-[#f39c12] overflow-hidden flex items-center justify-center flex-shrink-0 shadow-md">
+          <span className="text-5xl font-bold text-amber-800">{firstLetter}</span>
         </div>
 
         <div className="flex-1 text-center md:text-left">
-          <h2 className="text-2xl md:text-3xl font-bold text-white mb-1 flex items-center justify-center md:justify-start gap-2">
+          <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-1 flex items-center justify-center md:justify-start gap-2">
             <span>
               {profile?.first_name} {profile?.last_name}
             </span>
@@ -105,51 +105,51 @@ export function ProfileEditor({ initialProfile }: ProfileEditorProps) {
               {userLevelIcon}
             </span>
           </h2>
-          <p className="text-white/80 text-xs mb-4">
+          <p className="text-slate-500 text-xs mb-4">
             @{profile?.username} • Verified Parking Lagbe Member
           </p>
 
-          {/* 3 Stat Boxes matching my_profile.php lines 609-623 */}
+          {/* 3 Stat Boxes in White Theme */}
           <div className="flex flex-wrap justify-center md:justify-start gap-4 mb-6">
-            <div className="bg-black/40 backdrop-blur-md rounded-xl border border-white/10 p-4 min-w-[130px]">
-              <p className="text-white/60 text-xs">Total Points</p>
-              <p className="text-[#f39c12] text-xl font-bold mt-0.5">
+            <div className="bg-slate-50 rounded-2xl border border-slate-200 p-4 min-w-[130px]">
+              <p className="text-slate-500 text-xs">Total Points</p>
+              <p className="text-[#d97706] text-xl font-bold mt-0.5">
                 {(profile?.points || 0).toLocaleString()} PTS
               </p>
             </div>
 
-            <div className="bg-black/40 backdrop-blur-md rounded-xl border border-white/10 p-4 min-w-[130px]">
-              <p className="text-white/60 text-xs">VIP Status</p>
-              <p className="text-white text-xl font-bold capitalize mt-0.5">
+            <div className="bg-slate-50 rounded-2xl border border-slate-200 p-4 min-w-[130px]">
+              <p className="text-slate-500 text-xs">VIP Status</p>
+              <p className="text-slate-900 text-xl font-bold capitalize mt-0.5">
                 {profile?.user_level || "Bronze"}
               </p>
             </div>
 
-            <div className="bg-black/40 backdrop-blur-md rounded-xl border border-white/10 p-4 min-w-[160px]">
-              <p className="text-white/60 text-xs">Favorite Location</p>
-              <p className="text-emerald-400 text-base font-bold mt-1 truncate">Banani / Gulshan, Dhaka</p>
+            <div className="bg-slate-50 rounded-2xl border border-slate-200 p-4 min-w-[160px]">
+              <p className="text-slate-500 text-xs">Favorite Location</p>
+              <p className="text-emerald-700 text-base font-bold mt-1 truncate">Banani / Gulshan, Dhaka</p>
             </div>
           </div>
 
           <button
             onClick={() => setIsEditing(!isEditing)}
-            className="rounded-xl bg-[#f39c12] hover:bg-[#e67e22] text-white px-5 py-2 text-xs font-bold transition shadow"
+            className="rounded-xl bg-[#f39c12] hover:bg-[#e67e22] text-white px-5 py-2.5 text-xs font-bold transition shadow-sm"
           >
             {isEditing ? "Cancel Editing" : "Edit Profile Details"}
           </button>
         </div>
       </section>
 
-      {/* Account & Personal Information matching my_profile.php lines 639-700 */}
+      {/* Account & Personal Information in White Theme */}
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Personal Information */}
-        <div className="bg-black/50 backdrop-blur-md rounded-2xl border border-white/20 p-6 shadow-xl lg:col-span-2">
+        <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm lg:col-span-2">
           <div className="flex justify-between items-center mb-6">
-            <h3 className="text-lg font-bold text-white">Personal Information</h3>
+            <h3 className="text-lg font-bold text-slate-900">Personal Information</h3>
             {!isEditing && (
               <button
                 onClick={() => setIsEditing(true)}
-                className="text-xs font-bold text-[#f39c12] hover:underline"
+                className="text-xs font-bold text-[#d97706] hover:underline"
               >
                 Edit
               </button>
@@ -160,44 +160,44 @@ export function ProfileEditor({ initialProfile }: ProfileEditorProps) {
             <form onSubmit={handleSave} className="space-y-4 text-xs">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-white/80 font-semibold mb-1">First Name</label>
+                  <label className="block text-slate-700 font-bold mb-1">First Name</label>
                   <input
                     type="text"
                     required
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
-                    className="w-full rounded-xl border border-white/15 bg-black/50 px-3.5 py-2.5 text-white outline-none focus:border-[#f39c12]"
+                    className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-slate-900 outline-none focus:border-[#f39c12]"
                   />
                 </div>
                 <div>
-                  <label className="block text-white/80 font-semibold mb-1">Last Name</label>
+                  <label className="block text-slate-700 font-bold mb-1">Last Name</label>
                   <input
                     type="text"
                     required
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
-                    className="w-full rounded-xl border border-white/15 bg-black/50 px-3.5 py-2.5 text-white outline-none focus:border-[#f39c12]"
+                    className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-slate-900 outline-none focus:border-[#f39c12]"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-white/80 font-semibold mb-1">Phone Number</label>
+                  <label className="block text-slate-700 font-bold mb-1">Phone Number</label>
                   <input
                     type="tel"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    className="w-full rounded-xl border border-white/15 bg-black/50 px-3.5 py-2.5 text-white outline-none focus:border-[#f39c12]"
+                    className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-slate-900 outline-none focus:border-[#f39c12]"
                   />
                 </div>
                 <div>
-                  <label className="block text-white/80 font-semibold mb-1">Address / Street</label>
+                  <label className="block text-slate-700 font-bold mb-1">Address / Street</label>
                   <input
                     type="text"
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
-                    className="w-full rounded-xl border border-white/15 bg-black/50 px-3.5 py-2.5 text-white outline-none focus:border-[#f39c12]"
+                    className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-slate-900 outline-none focus:border-[#f39c12]"
                   />
                 </div>
               </div>
@@ -206,14 +206,14 @@ export function ProfileEditor({ initialProfile }: ProfileEditorProps) {
                 <button
                   type="button"
                   onClick={() => setIsEditing(false)}
-                  className="rounded-xl border border-white/20 bg-white/5 px-4 py-2 text-white hover:bg-white/10"
+                  className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-slate-700 hover:bg-slate-50 font-semibold"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={saving}
-                  className="rounded-xl bg-[#f39c12] hover:bg-[#e67e22] px-5 py-2 font-bold text-white shadow"
+                  className="rounded-xl bg-[#f39c12] hover:bg-[#e67e22] px-5 py-2 font-bold text-white shadow-sm"
                 >
                   {saving ? "Saving Changes..." : "Save Profile"}
                 </button>
@@ -222,54 +222,54 @@ export function ProfileEditor({ initialProfile }: ProfileEditorProps) {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs">
               <div>
-                <p className="text-white/60 text-[11px] mb-1">Full Name</p>
-                <p className="text-white text-sm font-semibold">
+                <p className="text-slate-400 text-[11px] font-semibold mb-1">Full Name</p>
+                <p className="text-slate-900 text-sm font-semibold">
                   {profile?.first_name} {profile?.last_name}
                 </p>
               </div>
 
               <div>
-                <p className="text-white/60 text-[11px] mb-1">Username</p>
-                <p className="text-white text-sm font-semibold">@{profile?.username}</p>
+                <p className="text-slate-400 text-[11px] font-semibold mb-1">Username</p>
+                <p className="text-slate-900 text-sm font-semibold">@{profile?.username}</p>
               </div>
 
               <div>
-                <p className="text-white/60 text-[11px] mb-1">Email Address</p>
-                <p className="text-white text-sm font-semibold">{profile?.email || "Not specified"}</p>
+                <p className="text-slate-400 text-[11px] font-semibold mb-1">Email Address</p>
+                <p className="text-slate-900 text-sm font-semibold">{profile?.email || "Not specified"}</p>
               </div>
 
               <div>
-                <p className="text-white/60 text-[11px] mb-1">Phone Number</p>
-                <p className="text-white text-sm font-semibold">{profile?.phone || "Not specified"}</p>
+                <p className="text-slate-400 text-[11px] font-semibold mb-1">Phone Number</p>
+                <p className="text-slate-900 text-sm font-semibold">{profile?.phone || "Not specified"}</p>
               </div>
 
               <div className="md:col-span-2">
-                <p className="text-white/60 text-[11px] mb-1">Address</p>
-                <p className="text-white text-sm font-semibold">{profile?.address || "Dhaka, Bangladesh"}</p>
+                <p className="text-slate-400 text-[11px] font-semibold mb-1">Address</p>
+                <p className="text-slate-900 text-sm font-semibold">{profile?.address || "Dhaka, Bangladesh"}</p>
               </div>
             </div>
           )}
         </div>
 
-        {/* Account Security matching my_profile.php lines 679-700 */}
-        <div className="bg-black/50 backdrop-blur-md rounded-2xl border border-white/20 p-6 shadow-xl space-y-6">
-          <h3 className="text-lg font-bold text-white">Account Security</h3>
+        {/* Account Security in White Theme */}
+        <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm space-y-6">
+          <h3 className="text-lg font-bold text-slate-900">Account Security</h3>
 
           <div>
             <div className="flex justify-between items-center mb-2 text-xs">
-              <p className="text-white/60">Account Verification</p>
-              <span className="rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-2.5 py-0.5 font-bold text-[10px]">
+              <p className="text-slate-500">Account Verification</p>
+              <span className="rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-0.5 font-bold text-[10px]">
                 Verified ✓
               </span>
             </div>
-            <p className="text-white/80 text-[11px]">
+            <p className="text-slate-600 text-[11px]">
               Your driver account identity is verified on Parking Lagbe.
             </p>
           </div>
 
-          <div className="border-t border-white/10 pt-4">
-            <p className="text-white/60 text-xs mb-1">Account Role</p>
-            <p className="text-white text-sm font-bold capitalize">
+          <div className="border-t border-slate-100 pt-4">
+            <p className="text-slate-500 text-xs mb-1">Account Role</p>
+            <p className="text-slate-900 text-sm font-bold capitalize">
               {profile?.role === "admin"
                 ? "Platform Super Admin"
                 : profile?.role === "garage_owner"

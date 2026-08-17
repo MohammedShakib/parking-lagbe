@@ -6,14 +6,13 @@ import { useState } from "react";
 
 export default function RegisterPage() {
   const router = useRouter();
-  const [userType, setUserType] = useState<"driver" | "owner">("driver");
+  const [role, setRole] = useState<"driver" | "garage_owner">("driver");
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [password, setPassword] = useState("");
   const [phone, setPhone] = useState("");
-  const [address, setAddress] = useState("");
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -34,215 +33,181 @@ export default function RegisterPage() {
           firstName,
           lastName,
           phone,
-          address,
-          accountType: userType === "owner" ? "owner" : "user",
+          role,
         }),
       });
 
       const data = await res.json();
-
       if (!res.ok) {
         throw new Error(data.error || "Registration failed");
       }
 
-      router.push("/login?registered=true");
+      if (role === "garage_owner") {
+        router.push("/business");
+      } else {
+        router.push("/dashboard");
+      }
+      router.refresh();
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Registration error";
-      setError(message);
+      const msg = err instanceof Error ? err.message : "Error creating account";
+      setError(msg);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center p-4 text-white">
-      {/* Background Image with Overlay matching registration.php */}
-      <div
-        className="fixed inset-0 bg-cover bg-center bg-no-repeat z-[-2]"
-        style={{
-          backgroundImage:
-            "url('https://images.unsplash.com/photo-1573348722427-f1d6819fdf98?q=80&w=1374&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D')",
-        }}
-      />
-      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[-1]" />
-
-      <div className="w-full max-w-4xl bg-black/60 backdrop-blur-xl rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row border border-white/20 z-10">
-        {/* Left Banner */}
-        <div className="md:w-5/12 bg-gradient-to-br from-[#f39c12] via-[#e67e22] to-[#d35400] p-8 sm:p-12 text-white flex flex-col justify-between relative overflow-hidden">
-          <div className="relative z-10">
-            <div className="flex items-center mb-6">
-              <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mr-4 shadow-lg shadow-black/20">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-7 w-7 text-[#f39c12]"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                  <path d="M9 18V6h4.5a2.5 2.5 0 0 1 0 5H9" />
-                </svg>
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+      <div className="w-full max-w-4xl bg-white rounded-3xl border border-slate-200 shadow-xl overflow-hidden grid grid-cols-1 md:grid-cols-2">
+        {/* Left Branding Panel */}
+        <div className="bg-gradient-to-br from-[#f39c12] to-[#e67e22] p-8 sm:p-12 text-white flex flex-col justify-between">
+          <div>
+            <div className="flex items-center gap-3 mb-8">
+              <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-md">
+                <span className="font-black text-[#f39c12] text-xl">P</span>
               </div>
-              <h1 className="text-2xl font-black tracking-tight">পার্কিং লাগবে</h1>
+              <h2 className="text-xl font-bold tracking-tight">পার্কিং লাগবে ?</h2>
             </div>
 
-            <h2 className="text-3xl font-extrabold mb-3">Join The Network!</h2>
-            <p className="text-xs sm:text-sm text-white/90 leading-relaxed">
-              Create your account in seconds. Find parking instantly across Dhaka or monetize your vacant parking spot.
+            <h1 className="text-2xl sm:text-3xl font-black mb-3 leading-snug">
+              Create Your Free Account
+            </h1>
+            <p className="text-white/90 text-xs sm:text-sm leading-relaxed">
+              Join thousands of drivers finding instant parking spaces across Dhaka, or register as a host to monetize your empty parking spots.
             </p>
           </div>
 
-          <div className="relative z-10 mt-8 pt-6 border-t border-white/20 text-xs text-white/80">
-            Guaranteed Parking Security & Digital Payment
+          <div className="pt-8 border-t border-white/20 mt-8">
+            <p className="text-xs text-white/80">
+              Already have an account?{" "}
+              <Link href="/login" className="font-bold underline text-white hover:text-amber-100">
+                Sign In
+              </Link>
+            </p>
           </div>
         </div>
 
-        {/* Right Form */}
-        <div className="md:w-7/12 p-8 sm:p-10 bg-neutral-950/80">
+        {/* Right Form Panel */}
+        <div className="p-8 sm:p-12 flex flex-col justify-center bg-white">
           <div className="mb-6">
-            <h3 className="text-xl font-bold text-white">Create New Account</h3>
-            <p className="text-xs text-white/60 mt-1">
-              Select your role and enter your details below.
-            </p>
-          </div>
-
-          {/* Role Switcher */}
-          <div className="grid grid-cols-2 gap-2 mb-5 rounded-xl bg-black/50 p-1 border border-white/10">
-            <button
-              type="button"
-              onClick={() => setUserType("driver")}
-              className={`rounded-lg py-2 text-xs font-bold transition ${
-                userType === "driver"
-                  ? "bg-[#f39c12] text-white shadow-md"
-                  : "text-white/60 hover:text-white"
-              }`}
-            >
-              🚗 Driver (Book Spots)
-            </button>
-            <button
-              type="button"
-              onClick={() => setUserType("owner")}
-              className={`rounded-lg py-2 text-xs font-bold transition ${
-                userType === "owner"
-                  ? "bg-[#f39c12] text-white shadow-md"
-                  : "text-white/60 hover:text-white"
-              }`}
-            >
-              🏢 Space Host (Earn 70%)
-            </button>
+            <h2 className="text-2xl font-bold text-slate-900">Get Started</h2>
+            <p className="text-xs text-slate-500 mt-1">Select your account type and fill in your details</p>
           </div>
 
           {error && (
-            <div className="mb-4 rounded-xl border border-red-500/40 bg-red-500/10 p-3 text-xs text-red-300">
+            <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-3.5 text-xs text-red-700 font-medium">
               ⚠️ {error}
             </div>
           )}
 
-          <form onSubmit={handleRegister} className="space-y-3">
+          {/* Role Selector Tabs */}
+          <div className="grid grid-cols-2 gap-2 bg-slate-100 p-1.5 rounded-2xl border border-slate-200 mb-5">
+            <button
+              type="button"
+              onClick={() => setRole("driver")}
+              className={`py-2 text-xs font-bold rounded-xl transition ${
+                role === "driver"
+                  ? "bg-white text-[#d97706] shadow-sm"
+                  : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              🚗 Driver (Search & Book)
+            </button>
+            <button
+              type="button"
+              onClick={() => setRole("garage_owner")}
+              className={`py-2 text-xs font-bold rounded-xl transition ${
+                role === "garage_owner"
+                  ? "bg-white text-[#d97706] shadow-sm"
+                  : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              🏢 Space Host (Business)
+            </button>
+          </div>
+
+          <form onSubmit={handleRegister} className="space-y-3.5 text-xs">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-semibold text-white/80 mb-1">First Name</label>
+                <label className="block text-slate-700 font-bold mb-1">First Name *</label>
                 <input
                   type="text"
                   required
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
                   placeholder="e.g. Shakib"
-                  className="w-full rounded-xl border border-white/15 bg-black/50 px-3.5 py-2.5 text-xs text-white placeholder-white/40 outline-none focus:border-[#f39c12]"
+                  className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-slate-900 placeholder:text-slate-400 outline-none focus:border-[#f39c12]"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-white/80 mb-1">Last Name</label>
+                <label className="block text-slate-700 font-bold mb-1">Last Name *</label>
                 <input
                   type="text"
                   required
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
-                  placeholder="e.g. Khan"
-                  className="w-full rounded-xl border border-white/15 bg-black/50 px-3.5 py-2.5 text-xs text-white placeholder-white/40 outline-none focus:border-[#f39c12]"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-semibold text-white/80 mb-1">Username</label>
-                <input
-                  type="text"
-                  required
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  placeholder="e.g. shakib01"
-                  className="w-full rounded-xl border border-white/15 bg-black/50 px-3.5 py-2.5 text-xs text-white placeholder-white/40 outline-none focus:border-[#f39c12]"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-white/80 mb-1">Email</label>
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="name@domain.com"
-                  className="w-full rounded-xl border border-white/15 bg-black/50 px-3.5 py-2.5 text-xs text-white placeholder-white/40 outline-none focus:border-[#f39c12]"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-semibold text-white/80 mb-1">Phone</label>
-                <input
-                  type="tel"
-                  required
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="+880 1700 000000"
-                  className="w-full rounded-xl border border-white/15 bg-black/50 px-3.5 py-2.5 text-xs text-white placeholder-white/40 outline-none focus:border-[#f39c12]"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-white/80 mb-1">Password</label>
-                <input
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Create password"
-                  className="w-full rounded-xl border border-white/15 bg-black/50 px-3.5 py-2.5 text-xs text-white placeholder-white/40 outline-none focus:border-[#f39c12]"
+                  placeholder="e.g. Al Hasan"
+                  className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-slate-900 placeholder:text-slate-400 outline-none focus:border-[#f39c12]"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-white/80 mb-1">Area / Address</label>
+              <label className="block text-slate-700 font-bold mb-1">Username *</label>
               <input
                 type="text"
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                placeholder="e.g. Dhanmondi, Dhaka"
-                className="w-full rounded-xl border border-white/15 bg-black/50 px-3.5 py-2.5 text-xs text-white placeholder-white/40 outline-none focus:border-[#f39c12]"
+                required
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="Choose unique username"
+                className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-slate-900 placeholder:text-slate-400 outline-none focus:border-[#f39c12]"
               />
+            </div>
+
+            <div>
+              <label className="block text-slate-700 font-bold mb-1">Email Address *</label>
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="e.g. user@example.com"
+                className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-slate-900 placeholder:text-slate-400 outline-none focus:border-[#f39c12]"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-slate-700 font-bold mb-1">Phone Number</label>
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="01700000000"
+                  className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-slate-900 placeholder:text-slate-400 outline-none focus:border-[#f39c12]"
+                />
+              </div>
+              <div>
+                <label className="block text-slate-700 font-bold mb-1">Password *</label>
+                <input
+                  type="password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Min 6 characters"
+                  className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-slate-900 placeholder:text-slate-400 outline-none focus:border-[#f39c12]"
+                />
+              </div>
             </div>
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full rounded-xl bg-[#f39c12] py-3 text-xs font-bold text-white shadow-xl shadow-[#f39c12]/25 hover:bg-[#e67e22] transition disabled:opacity-50 mt-3"
+              className="w-full rounded-xl bg-[#f39c12] hover:bg-[#e67e22] py-3 font-bold text-white text-xs shadow-md shadow-[#f39c12]/20 transition disabled:opacity-50 mt-3"
             >
-              {loading ? "Creating Account..." : "Create Free Account 🚀"}
+              {loading ? "Creating Account..." : "Create Account"}
             </button>
           </form>
-
-          <div className="mt-4 text-center text-xs text-white/60">
-            Already have an account?{" "}
-            <Link href="/login" className="font-bold text-[#f39c12] hover:underline">
-              Sign In
-            </Link>
-          </div>
         </div>
       </div>
     </div>

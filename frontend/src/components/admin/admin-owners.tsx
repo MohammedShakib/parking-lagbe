@@ -2,25 +2,28 @@
 
 import { useEffect, useState } from "react";
 
-interface AdminOwner {
+interface AdminOwnerItem {
   owner_id: string;
   username: string;
-  name: string;
+  first_name: string;
+  last_name: string;
   email: string;
-  phone: string;
   is_verified: boolean;
-  account_status: "active" | "suspended";
   commission_rate: number;
-  garages_count: number;
+  trade_license_number: string | null;
+  nid_number: string | null;
 }
 
 export function AdminOwners() {
-  const [owners, setOwners] = useState<AdminOwner[]>([]);
+  const [owners, setOwners] = useState<AdminOwnerItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [updatingOwnerId, setUpdatingOwnerId] = useState<string | null>(null);
+  const [editingOwner, setEditingOwner] = useState<AdminOwnerItem | null>(null);
+  const [commissionRate, setCommissionRate] = useState<number>(30);
+  const [savingRate, setSavingRate] = useState(false);
 
   const fetchOwners = async () => {
     try {
+      setLoading(true);
       const res = await fetch("/api/admin/owners");
       const data = await res.json();
       if (data.owners) {
@@ -54,130 +57,212 @@ export function AdminOwners() {
     };
   }, []);
 
-  const handleToggleVerification = async (ownerId: string, current: boolean) => {
-    setUpdatingOwnerId(ownerId);
+  const handleVerify = async (ownerId: string, isVerified: boolean) => {
     try {
       const res = await fetch("/api/admin/owners", {
-        method: "PATCH",
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ownerId, isVerified: !current }),
+        body: JSON.stringify({ ownerId, isVerified }),
       });
-      if (res.ok) {
-        fetchOwners();
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to update owner verification");
       }
-    } catch {
-      // Handled
-    } finally {
-      setUpdatingOwnerId(null);
+
+      fetchOwners();
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : "Error verifying host");
     }
   };
 
-  const handleSetCommission = async (ownerId: string, rate: number) => {
-    setUpdatingOwnerId(ownerId);
+  const handleSaveCommission = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingOwner) return;
+
+    setSavingRate(true);
     try {
       const res = await fetch("/api/admin/owners", {
-        method: "PATCH",
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ownerId, commissionRate: rate }),
+        body: JSON.stringify({
+          ownerId: editingOwner.owner_id,
+          commissionRate: parseFloat(commissionRate.toString()),
+        }),
       });
-      if (res.ok) {
-        fetchOwners();
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to update commission rate");
       }
-    } catch {
-      // Handled
+
+      setEditingOwner(null);
+      fetchOwners();
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : "Error saving rate");
     } finally {
-      setUpdatingOwnerId(null);
+      setSavingRate(false);
     }
   };
 
   return (
-    <div>
-      <div className="mb-6">
-        <h2 className="text-xl font-bold text-white">Space Hosts & Commission Rates</h2>
-        <p className="text-xs text-neutral-400">
-          Manage host business verification, active status, and custom platform commission overrides.
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-xl font-bold text-slate-900">Space Host Verifications & Commission Rates</h2>
+        <p className="text-xs text-slate-500">
+          Review host NID/trade credentials, grant business verification, and configure custom profit split overrides.
         </p>
       </div>
 
       {loading ? (
-        <div className="h-64 animate-pulse rounded-2xl border border-neutral-800 bg-neutral-900/50" />
+        <div className="h-64 rounded-3xl bg-slate-100 border border-slate-200 animate-pulse" />
       ) : owners.length === 0 ? (
-        <div className="rounded-2xl border border-neutral-800 bg-neutral-900/40 p-12 text-center text-xs text-neutral-500">
-          No registered garage hosts found.
+        <div className="rounded-3xl border border-slate-200 bg-white p-12 text-center shadow-sm">
+          <p className="text-xs text-slate-500">No registered hosts found.</p>
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-2xl border border-neutral-800 bg-neutral-900/60 shadow-xl">
-          <table className="w-full text-left text-xs">
-            <thead className="border-b border-neutral-800 bg-neutral-950 text-neutral-400 uppercase tracking-wider text-[10px]">
+        <div className="overflow-x-auto rounded-3xl border border-slate-200 bg-white shadow-sm">
+          <table className="w-full text-left text-xs text-slate-800">
+            <thead className="border-b border-slate-200 bg-slate-50 uppercase text-[10px] text-slate-500 tracking-wider">
               <tr>
-                <th className="px-4 py-3">Host & Owner ID</th>
-                <th className="px-4 py-3">Contact</th>
-                <th className="px-4 py-3">Garages</th>
-                <th className="px-4 py-3">Commission Split</th>
-                <th className="px-4 py-3">Verification</th>
-                <th className="px-4 py-3 text-right">Actions</th>
+                <th className="p-4">Host Name</th>
+                <th className="p-4">Owner ID & User</th>
+                <th className="p-4">NID / Trade License</th>
+                <th className="p-4">Platform Fee Rate</th>
+                <th className="p-4">Host Net Rate</th>
+                <th className="p-4">Verification</th>
+                <th className="p-4 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-neutral-800 text-neutral-300">
+            <tbody className="divide-y divide-slate-100">
               {owners.map((o) => (
-                <tr key={o.owner_id} className="hover:bg-neutral-800/30 transition">
-                  <td className="px-4 py-3">
-                    <div className="font-bold text-white">@{o.username}</div>
-                    <div className="font-mono text-[10px] text-neutral-500">{o.owner_id}</div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div>{o.name}</div>
-                    <div className="text-[11px] text-neutral-500">{o.phone}</div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className="font-bold text-teal-400">{o.garages_count} Spaces</span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-1.5">
-                      <span className="font-bold text-white">{o.commission_rate}%</span>
-                      <span className="text-[10px] text-neutral-500">(Platform)</span>
+                <tr key={o.owner_id} className="hover:bg-slate-50 transition">
+                  <td className="p-4">
+                    <div className="font-bold text-slate-900">
+                      {o.first_name} {o.last_name}
                     </div>
+                    <div className="text-slate-500 text-[11px]">{o.email}</div>
                   </td>
-                  <td className="px-4 py-3">
+
+                  <td className="p-4">
+                    <div className="font-mono text-slate-900">#{o.owner_id}</div>
+                    <div className="text-slate-500 text-[11px]">@{o.username}</div>
+                  </td>
+
+                  <td className="p-4 font-mono text-[11px] text-slate-700">
+                    <div>NID: {o.nid_number || "Verified"}</div>
+                    <div className="text-slate-400">TL: {o.trade_license_number || "Residential"}</div>
+                  </td>
+
+                  <td className="p-4 font-bold text-[#d97706]">
+                    {o.commission_rate.toFixed(1)}%
+                  </td>
+
+                  <td className="p-4 font-bold text-emerald-600">
+                    {(100 - o.commission_rate).toFixed(1)}%
+                  </td>
+
+                  <td className="p-4">
                     <span
-                      className={`rounded-full px-2.5 py-0.5 text-[10px] font-semibold border ${
+                      className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold border ${
                         o.is_verified
-                          ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
-                          : "bg-amber-500/10 text-amber-400 border-amber-500/30"
+                          ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                          : "bg-amber-50 text-amber-700 border border-amber-200"
                       }`}
                     >
-                      {o.is_verified ? "Verified Host ✓" : "Pending"}
+                      {o.is_verified ? "Verified Host ✓" : "Pending Review"}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-right space-x-2">
+
+                  <td className="p-4 text-right space-x-2">
                     <button
-                      disabled={updatingOwnerId === o.owner_id}
-                      onClick={() => handleToggleVerification(o.owner_id, o.is_verified)}
-                      className={`rounded-lg px-2.5 py-1 text-[11px] font-bold transition ${
-                        o.is_verified
-                          ? "border border-red-500/30 bg-red-500/10 text-red-400 hover:bg-red-500/20"
-                          : "bg-emerald-500 text-neutral-950 hover:bg-emerald-400"
-                      }`}
-                    >
-                      {updatingOwnerId === o.owner_id ? "..." : o.is_verified ? "Revoke" : "Approve ✓"}
-                    </button>
-                    <button
-                      disabled={updatingOwnerId === o.owner_id}
                       onClick={() => {
-                        const newRate = prompt("Enter new commission rate percentage (e.g. 20 for 20%):", o.commission_rate.toString());
-                        if (newRate && !isNaN(parseFloat(newRate))) {
-                          handleSetCommission(o.owner_id, parseFloat(newRate));
-                        }
+                        setEditingOwner(o);
+                        setCommissionRate(o.commission_rate);
                       }}
-                      className="rounded-lg border border-neutral-700 bg-neutral-800 px-2.5 py-1 text-[11px] font-semibold text-neutral-200 hover:border-neutral-600"
+                      className="rounded-xl border border-slate-300 bg-white hover:bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 transition"
                     >
-                      Set Rate %
+                      ⚙️ Rate
                     </button>
+
+                    {!o.is_verified ? (
+                      <button
+                        onClick={() => handleVerify(o.owner_id, true)}
+                        className="rounded-xl bg-emerald-600 hover:bg-emerald-700 px-3 py-1.5 text-xs font-bold text-white shadow-sm transition"
+                      >
+                        ✓ Verify
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => handleVerify(o.owner_id, false)}
+                        className="rounded-xl bg-slate-100 hover:bg-rose-50 hover:text-rose-700 px-3 py-1.5 text-xs font-medium text-slate-700 transition border border-slate-200"
+                      >
+                        Revoke
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* Commission Editor Modal in White Theme */}
+      {editingOwner && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn">
+          <div className="w-full max-w-sm rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl space-y-4">
+            <h3 className="text-base font-bold text-slate-900">
+              Edit Host Commission Rate
+            </h3>
+            <p className="text-xs text-slate-500">
+              Custom platform fee percentage for {editingOwner.first_name} {editingOwner.last_name} (@{editingOwner.username}).
+            </p>
+
+            <form onSubmit={handleSaveCommission} className="space-y-4 text-xs">
+              <div>
+                <label className="block text-slate-700 font-bold mb-1">
+                  Platform Commission Percentage (%)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.5"
+                  required
+                  value={commissionRate}
+                  onChange={(e) => setCommissionRate(parseFloat(e.target.value))}
+                  className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-slate-900 font-bold outline-none focus:border-[#f39c12]"
+                />
+              </div>
+
+              <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs">
+                <div className="flex justify-between text-slate-600">
+                  <span>Host Net Payout:</span>
+                  <span className="font-bold text-emerald-600">
+                    {(100 - commissionRate).toFixed(1)}%
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setEditingOwner(null)}
+                  className="flex-1 rounded-xl border border-slate-300 bg-white py-2 font-semibold text-slate-700 hover:bg-slate-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingRate}
+                  className="flex-1 rounded-xl bg-[#f39c12] hover:bg-[#e67e22] py-2 font-bold text-white shadow-md shadow-[#f39c12]/20 disabled:opacity-50"
+                >
+                  {savingRate ? "Saving..." : "Save Rate"}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>

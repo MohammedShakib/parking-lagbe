@@ -2,121 +2,69 @@
 
 import { useEffect, useState } from "react";
 
-export interface GarageItem {
-  garage_id: string;
-  parking_space_name: string;
-  parking_lot_address: string;
-  parking_type: string;
-  parking_space_dimensions: string;
-  parking_capacity: number;
-  availability: number;
-  price_per_hour: number;
-  is_verified: boolean;
-  latitude: number;
-  longitude: number;
-  average_rating: number;
-  total_ratings: number;
-  is_24_7: boolean;
-}
+import { GarageItem } from "./garage-search";
 
 interface Vehicle {
+  id: number;
   license_plate: string;
   vehicle_type: string;
   make: string | null;
   model: string | null;
-  color: string | null;
 }
 
 interface BookingModalProps {
-  garage: GarageItem | null;
+  garage: GarageItem;
   onClose: () => void;
-  onBookingSuccess: (bookingId: number) => void;
-  userPoints: number;
+  onSuccess: () => void;
 }
 
-export function BookingModal({
-  garage,
-  onClose,
-  onBookingSuccess,
-  userPoints,
-}: BookingModalProps) {
+export function BookingModal({ garage, onClose, onSuccess }: BookingModalProps) {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
-  const [selectedPlate, setSelectedPlate] = useState("");
-  const [newPlate, setNewPlate] = useState("");
-  const [newVehicleType, setNewVehicleType] = useState("Car");
-  const [showAddVehicle, setShowAddVehicle] = useState(false);
-
-  const todayStr = new Date().toISOString().split("T")[0];
-  const [bookingDate, setBookingDate] = useState(todayStr);
-
-  const nowHours = new Date().getHours().toString().padStart(2, "0");
-  const nowMinutes = "00";
-  const [bookingTime, setBookingTime] = useState(`${nowHours}:${nowMinutes}`);
-
+  const [selectedPlate, setSelectedPlate] = useState<string>("");
+  const [bookingDate, setBookingDate] = useState(
+    new Date().toISOString().split("T")[0]
+  );
+  const [bookingTime, setBookingTime] = useState("10:00");
   const [duration, setDuration] = useState(2);
   const [usePoints, setUsePoints] = useState(false);
+  const [availablePoints, setAvailablePoints] = useState(0);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    let ignore = false;
-    async function load() {
+    async function loadData() {
       try {
-        const res = await fetch("/api/vehicles");
-        const data = await res.json();
-        if (!ignore && data.vehicles && data.vehicles.length > 0) {
-          setVehicles(data.vehicles);
-          setSelectedPlate(data.vehicles[0].license_plate);
-        } else if (!ignore) {
-          setShowAddVehicle(true);
+        const [vRes, pRes] = await Promise.all([
+          fetch("/api/vehicles"),
+          fetch("/api/points"),
+        ]);
+        const vData = await vRes.json();
+        const pData = await pRes.json();
+
+        if (vData.vehicles && vData.vehicles.length > 0) {
+          setVehicles(vData.vehicles);
+          setSelectedPlate(vData.vehicles[0].license_plate);
+        }
+        if (pData.points) {
+          setAvailablePoints(pData.points);
         }
       } catch {
-        // Fallback
+        // Handled
       }
     }
-    load();
-    return () => {
-      ignore = true;
-    };
+    loadData();
   }, []);
 
-  const handleAddQuickVehicle = async (e: React.FormEvent) => {
+  const rawTotal = duration * garage.price_per_hour;
+  // 150 points gives 1 hour free
+  const pointsDiscount = usePoints && availablePoints >= 150 ? garage.price_per_hour : 0;
+  const finalTotal = Math.max(0, rawTotal - pointsDiscount);
+
+  const handleBooking = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newPlate.trim()) return;
-    try {
-      const res = await fetch("/api/vehicles", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          licensePlate: newPlate.trim().toUpperCase(),
-          vehicleType: newVehicleType,
-        }),
-      });
-      const data = await res.json();
-      if (res.ok && data.vehicle) {
-        setVehicles((prev) => [...prev, data.vehicle]);
-        setSelectedPlate(data.vehicle.license_plate);
-        setShowAddVehicle(false);
-        setNewPlate("");
-      } else {
-        setError(data.error || "Failed to add vehicle");
-      }
-    } catch {
-      setError("Failed to add vehicle");
-    }
-  };
-
-  if (!garage) return null;
-
-  const rawTotal = garage.price_per_hour * duration;
-  const maxPointsApplicable = Math.min(userPoints, rawTotal);
-  const pointsDiscount = usePoints ? maxPointsApplicable : 0;
-  const finalPayable = Math.max(0, rawTotal - pointsDiscount);
-
-  const handleSubmitBooking = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedPlate && !newPlate) {
-      setError("Please select or add a vehicle license plate.");
+    if (!selectedPlate) {
+      setError("Please select or add a vehicle first.");
       return;
     }
 
@@ -124,213 +72,173 @@ export function BookingModal({
     setError(null);
 
     try {
-      const plateToUse = selectedPlate || newPlate.trim().toUpperCase();
-
       const res = await fetch("/api/bookings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           garageId: garage.garage_id,
-          licensePlate: plateToUse,
+          licensePlate: selectedPlate,
           bookingDate,
-          bookingTime: `${bookingTime}:00`,
+          bookingTime,
           duration,
-          paidWithPoints: usePoints,
-          pointsUsed: pointsDiscount,
+          usePoints,
         }),
       });
 
       const data = await res.json();
-
       if (!res.ok) {
-        throw new Error(data.error || "Could not reserve spot. Please try another time.");
+        throw new Error(data.error || "Failed to reserve parking");
       }
 
-      onBookingSuccess(data.bookingId);
+      alert("🎉 Booking confirmed successfully!");
+      onSuccess();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Booking error";
       setError(msg);
+    } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm">
-      <div className="relative w-full max-w-lg rounded-2xl border border-neutral-800 bg-neutral-900 p-6 shadow-2xl">
-        {/* Close Button */}
-        <button
-          onClick={onClose}
-          className="absolute right-4 top-4 rounded-full p-2 text-neutral-400 hover:bg-neutral-800 hover:text-white"
-        >
-          ✕
-        </button>
-
-        <div className="mb-4">
-          <span className="rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-semibold text-emerald-400 border border-emerald-500/30">
-            Instant Spot Reservation
-          </span>
-          <h2 className="mt-2 text-xl font-bold text-white">{garage.parking_space_name}</h2>
-          <p className="text-xs text-neutral-400">{garage.parking_lot_address}</p>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn">
+      <div className="w-full max-w-lg bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-2xl space-y-6">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+          <div>
+            <h3 className="text-lg font-bold text-slate-900">Reserve Parking Spot</h3>
+            <p className="text-xs text-slate-500">{garage.parking_space_name}</p>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:text-slate-900 flex items-center justify-center font-bold"
+          >
+            ✕
+          </button>
         </div>
 
         {error && (
-          <div className="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-xs text-red-300">
-            {error}
+          <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-xs text-red-700 font-semibold">
+            ⚠️ {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmitBooking} className="space-y-4">
-          {/* Vehicle Selection */}
+        <form onSubmit={handleBooking} className="space-y-4 text-xs">
+          {/* Select Vehicle */}
           <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="text-xs font-medium text-neutral-400">Select Vehicle</label>
-              <button
-                type="button"
-                onClick={() => setShowAddVehicle(!showAddVehicle)}
-                className="text-xs text-emerald-400 hover:underline"
-              >
-                {showAddVehicle ? "Select existing" : "+ Add new vehicle"}
-              </button>
-            </div>
-
-            {showAddVehicle ? (
-              <div className="rounded-xl border border-neutral-800 bg-neutral-950 p-3 space-y-2">
-                <div className="grid grid-cols-2 gap-2">
-                  <input
-                    type="text"
-                    placeholder="Plate (e.g. DHA-GA-11-2233)"
-                    value={newPlate}
-                    onChange={(e) => setNewPlate(e.target.value)}
-                    className="rounded-lg border border-neutral-800 bg-neutral-900 px-3 py-1.5 text-xs text-white uppercase outline-none focus:border-emerald-500"
-                  />
-                  <select
-                    value={newVehicleType}
-                    onChange={(e) => setNewVehicleType(e.target.value)}
-                    className="rounded-lg border border-neutral-800 bg-neutral-900 px-2.5 py-1.5 text-xs text-white outline-none focus:border-emerald-500"
-                  >
-                    <option value="Car">Car (Sedan/SUV)</option>
-                    <option value="Motorcycle">Motorcycle / Bike</option>
-                    <option value="Microbus">Microbus</option>
-                  </select>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleAddQuickVehicle}
-                  className="rounded-lg bg-emerald-500 px-3 py-1 text-xs font-semibold text-neutral-950 hover:bg-emerald-400"
-                >
-                  Save & Use Vehicle
-                </button>
+            <label className="block text-slate-700 font-bold mb-1.5">Select Vehicle *</label>
+            {vehicles.length === 0 ? (
+              <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-900 text-xs">
+                No vehicles registered. Please add a vehicle in the <strong>My Vehicles</strong> tab.
               </div>
             ) : (
               <select
                 value={selectedPlate}
                 onChange={(e) => setSelectedPlate(e.target.value)}
-                className="w-full rounded-xl border border-neutral-800 bg-neutral-950 px-3.5 py-2.5 text-xs text-white outline-none focus:border-emerald-500"
+                className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-slate-900 outline-none focus:border-[#f39c12]"
               >
                 {vehicles.map((v) => (
                   <option key={v.license_plate} value={v.license_plate}>
-                    {v.license_plate} - {v.make || ""} {v.model || v.vehicle_type}
+                    {v.make} {v.model} ({v.license_plate}) - {v.vehicle_type}
                   </option>
                 ))}
               </select>
             )}
           </div>
 
-          {/* Date & Time */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-neutral-400 mb-1">Reservation Date</label>
+              <label className="block text-slate-700 font-bold mb-1.5">Arrival Date</label>
               <input
                 type="date"
-                min={todayStr}
+                required
                 value={bookingDate}
                 onChange={(e) => setBookingDate(e.target.value)}
-                className="w-full rounded-xl border border-neutral-800 bg-neutral-950 px-3 py-2 text-xs text-white outline-none focus:border-emerald-500"
+                className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-slate-900 outline-none focus:border-[#f39c12]"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-neutral-400 mb-1">Arrival Time</label>
+              <label className="block text-slate-700 font-bold mb-1.5">Arrival Time</label>
               <input
                 type="time"
+                required
                 value={bookingTime}
                 onChange={(e) => setBookingTime(e.target.value)}
-                className="w-full rounded-xl border border-neutral-800 bg-neutral-950 px-3 py-2 text-xs text-white outline-none focus:border-emerald-500"
+                className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-slate-900 outline-none focus:border-[#f39c12]"
               />
             </div>
           </div>
 
           {/* Duration Slider */}
           <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="text-xs font-medium text-neutral-400">Duration (Hours)</label>
-              <span className="text-xs font-bold text-emerald-400">{duration} Hour{duration > 1 ? "s" : ""}</span>
+            <div className="flex justify-between items-center mb-1.5">
+              <label className="text-slate-700 font-bold">Parking Duration</label>
+              <span className="text-xs font-black text-[#d97706]">{duration} Hours</span>
             </div>
             <input
               type="range"
               min="1"
               max="12"
+              step="1"
               value={duration}
               onChange={(e) => setDuration(parseInt(e.target.value, 10))}
-              className="w-full accent-emerald-500 cursor-pointer"
+              className="w-full accent-[#f39c12] cursor-pointer"
             />
-            <div className="flex justify-between text-[10px] text-neutral-500 mt-1">
-              <span>1 hr</span>
-              <span>4 hrs</span>
-              <span>8 hrs</span>
-              <span>12 hrs</span>
-            </div>
           </div>
 
-          {/* Points Discount Option */}
-          {userPoints > 0 && (
-            <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-3 flex items-center justify-between">
-              <div>
-                <div className="text-xs font-medium text-amber-300">Redeem Points</div>
-                <div className="text-[11px] text-neutral-400">
-                  Available: {userPoints} pts (Discount: ৳{maxPointsApplicable})
-                </div>
-              </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={usePoints}
-                  onChange={(e) => setUsePoints(e.target.checked)}
-                  className="sr-only peer"
-                />
-                <div className="w-9 h-5 bg-neutral-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-amber-500"></div>
+          {/* Loyalty Points Discount Option */}
+          {availablePoints >= 150 && (
+            <div className="flex items-center gap-3 p-3 bg-amber-50 rounded-xl border border-amber-200">
+              <input
+                type="checkbox"
+                id="pointsDiscount"
+                checked={usePoints}
+                onChange={(e) => setUsePoints(e.target.checked)}
+                className="w-4 h-4 accent-[#f39c12]"
+              />
+              <label htmlFor="pointsDiscount" className="text-xs text-amber-900 cursor-pointer">
+                Redeem <strong>150 Points</strong> for 1 Hour Free Parking (Balance: {availablePoints} PTS)
               </label>
             </div>
           )}
 
-          {/* Price Calculation Summary */}
-          <div className="rounded-xl border border-neutral-800 bg-neutral-950 p-3.5 space-y-1.5 text-xs">
-            <div className="flex justify-between text-neutral-400">
-              <span>Rate:</span>
-              <span>৳{garage.price_per_hour}/hr × {duration} hrs</span>
+          {/* Total Calculation Banner in White Theme */}
+          <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200 space-y-1.5">
+            <div className="flex justify-between text-slate-600">
+              <span>Rate per hour:</span>
+              <span>৳{garage.price_per_hour.toFixed(2)}</span>
             </div>
-            <div className="flex justify-between text-neutral-400">
-              <span>Subtotal:</span>
-              <span>৳{rawTotal}</span>
+            <div className="flex justify-between text-slate-600">
+              <span>Total Duration:</span>
+              <span>{duration} hour(s)</span>
             </div>
             {pointsDiscount > 0 && (
-              <div className="flex justify-between text-amber-400">
+              <div className="flex justify-between text-emerald-600 font-semibold">
                 <span>Points Discount:</span>
-                <span>-৳{pointsDiscount}</span>
+                <span>-৳{pointsDiscount.toFixed(2)}</span>
               </div>
             )}
-            <div className="flex justify-between font-bold text-white border-t border-neutral-800 pt-2 text-sm">
-              <span>Total Payable:</span>
-              <span className="text-emerald-400">৳{finalPayable}</span>
+            <div className="border-t border-slate-200 pt-2 flex justify-between items-baseline">
+              <span className="font-bold text-slate-900">Total Payable:</span>
+              <span className="text-lg font-black text-[#d97706]">৳{finalTotal.toFixed(2)}</span>
             </div>
           </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 py-3 text-xs font-semibold text-neutral-950 shadow-lg shadow-emerald-500/20 transition hover:opacity-95 disabled:opacity-50"
-          >
-            {loading ? "Confirming Spot..." : "Reserve Parking Spot 🚗"}
-          </button>
+          <div className="flex gap-3 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 rounded-xl border border-slate-300 bg-white py-3 font-semibold text-slate-700 hover:bg-slate-50 transition"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={loading || vehicles.length === 0}
+              className="flex-1 rounded-xl bg-[#f39c12] hover:bg-[#e67e22] py-3 font-bold text-white shadow-md shadow-[#f39c12]/20 transition disabled:opacity-50"
+            >
+              {loading ? "Confirming..." : "Confirm Reservation"}
+            </button>
+          </div>
         </form>
       </div>
     </div>

@@ -2,25 +2,26 @@
 
 import { useEffect, useState } from "react";
 
-interface AdminUser {
+interface AdminUserItem {
   username: string;
   email: string;
-  name: string;
-  phone: string;
+  first_name: string;
+  last_name: string;
+  phone: string | null;
   status: "verified" | "unverified" | "suspended";
+  role: "admin" | "garage_owner" | "driver";
   points: number;
-  user_level: "Bronze" | "Gold" | "Diamond";
-  registration_date: string;
+  user_level: string;
 }
 
 export function AdminUsers() {
-  const [users, setUsers] = useState<AdminUser[]>([]);
+  const [users, setUsers] = useState<AdminUserItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
-  const [updatingUser, setUpdatingUser] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
 
   const fetchUsers = async () => {
     try {
+      setLoading(true);
       const res = await fetch("/api/admin/users");
       const data = await res.json();
       if (data.users) {
@@ -54,122 +55,130 @@ export function AdminUsers() {
     };
   }, []);
 
-  const handleUpdateStatus = async (username: string, newStatus: string) => {
-    setUpdatingUser(username);
+  const handleVerify = async (username: string, status: "verified" | "unverified") => {
     try {
       const res = await fetch("/api/admin/users", {
-        method: "PATCH",
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, newStatus }),
+        body: JSON.stringify({ username, status }),
       });
-      if (res.ok) {
-        fetchUsers();
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to update user status");
       }
-    } catch {
-      // Handled
-    } finally {
-      setUpdatingUser(null);
+
+      fetchUsers();
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : "Error updating user");
     }
   };
 
-  const filtered = users.filter(
-    (u) =>
-      u.username.toLowerCase().includes(search.toLowerCase()) ||
-      u.name.toLowerCase().includes(search.toLowerCase()) ||
-      u.email.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = users.filter((u) => {
+    const q = query.toLowerCase();
+    return (
+      u.username.toLowerCase().includes(q) ||
+      u.email.toLowerCase().includes(q) ||
+      `${u.first_name} ${u.last_name}`.toLowerCase().includes(q)
+    );
+  });
 
   return (
-    <div>
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6">
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
-          <h2 className="text-xl font-bold text-white">User Accounts & Verification</h2>
-          <p className="text-xs text-neutral-400">
-            Audit registered drivers, adjust VIP tiers, and manage account statuses.
+          <h2 className="text-xl font-bold text-slate-900">User Account Management & Verification</h2>
+          <p className="text-xs text-slate-500">
+            Monitor registered driver accounts, verify identity status, and manage platform roles.
           </p>
         </div>
 
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search by username, name, or email..."
-          className="w-full sm:w-72 rounded-xl border border-neutral-800 bg-neutral-950 px-3.5 py-2 text-xs text-white outline-none focus:border-indigo-500"
-        />
+        <div className="w-full sm:w-64">
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search username, email, name..."
+            className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs text-slate-900 outline-none focus:border-[#f39c12]"
+          />
+        </div>
       </div>
 
       {loading ? (
-        <div className="h-64 animate-pulse rounded-2xl border border-neutral-800 bg-neutral-900/50" />
+        <div className="h-64 rounded-3xl bg-slate-100 border border-slate-200 animate-pulse" />
       ) : filtered.length === 0 ? (
-        <div className="rounded-2xl border border-neutral-800 bg-neutral-900/40 p-12 text-center text-xs text-neutral-500">
-          No users match the search criteria.
+        <div className="rounded-3xl border border-slate-200 bg-white p-12 text-center shadow-sm">
+          <p className="text-xs text-slate-500">No user accounts found matching query.</p>
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-2xl border border-neutral-800 bg-neutral-900/60 shadow-xl">
-          <table className="w-full text-left text-xs">
-            <thead className="border-b border-neutral-800 bg-neutral-950 text-neutral-400 uppercase tracking-wider text-[10px]">
+        <div className="overflow-x-auto rounded-3xl border border-slate-200 bg-white shadow-sm">
+          <table className="w-full text-left text-xs text-slate-800">
+            <thead className="border-b border-slate-200 bg-slate-50 uppercase text-[10px] text-slate-500 tracking-wider">
               <tr>
-                <th className="px-4 py-3">User</th>
-                <th className="px-4 py-3">Contact</th>
-                <th className="px-4 py-3">VIP Tier & Points</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3 text-right">Actions</th>
+                <th className="p-4">User & Name</th>
+                <th className="p-4">Email & Phone</th>
+                <th className="p-4">Role</th>
+                <th className="p-4">Points & Tier</th>
+                <th className="p-4">Identity Status</th>
+                <th className="p-4 text-right">Verification Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-neutral-800 text-neutral-300">
+            <tbody className="divide-y divide-slate-100">
               {filtered.map((u) => (
-                <tr key={u.username} className="hover:bg-neutral-800/30 transition">
-                  <td className="px-4 py-3">
-                    <div className="font-bold text-white">@{u.username}</div>
-                    <div className="text-[11px] text-neutral-400">{u.name}</div>
+                <tr key={u.username} className="hover:bg-slate-50 transition">
+                  <td className="p-4">
+                    <div className="font-bold text-slate-900">
+                      {u.first_name} {u.last_name}
+                    </div>
+                    <div className="font-mono text-[11px] text-slate-500">@{u.username}</div>
                   </td>
-                  <td className="px-4 py-3">
-                    <div>{u.email}</div>
-                    <div className="text-[11px] text-neutral-500">{u.phone}</div>
+
+                  <td className="p-4">
+                    <div className="text-slate-900">{u.email}</div>
+                    <div className="text-slate-500 text-[11px]">{u.phone || "No phone"}</div>
                   </td>
-                  <td className="px-4 py-3">
-                    <span className="font-bold text-amber-400">{u.user_level}</span>
-                    <div className="text-[11px] text-neutral-400">{u.points} pts</div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span
-                      className={`rounded-full px-2.5 py-0.5 text-[10px] font-semibold border ${
-                        u.status === "verified"
-                          ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
-                          : u.status === "suspended"
-                          ? "bg-red-500/10 text-red-400 border-red-500/30"
-                          : "bg-neutral-800 text-neutral-400 border-neutral-700"
-                      }`}
-                    >
-                      {u.status}
+
+                  <td className="p-4">
+                    <span className="capitalize font-semibold text-slate-700">
+                      {u.role === "admin"
+                        ? "🛡️ Super Admin"
+                        : u.role === "garage_owner"
+                        ? "🏢 Space Host"
+                        : "🚗 Driver"}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-right space-x-2">
-                    {u.status !== "verified" && (
+
+                  <td className="p-4">
+                    <div className="font-bold text-[#d97706]">{u.points} PTS</div>
+                    <span className="text-[10px] text-slate-500 capitalize">{u.user_level} VIP</span>
+                  </td>
+
+                  <td className="p-4">
+                    <span
+                      className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold border ${
+                        u.status === "verified"
+                          ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                          : "bg-amber-50 text-amber-700 border border-amber-200"
+                      }`}
+                    >
+                      {u.status.toUpperCase()}
+                    </span>
+                  </td>
+
+                  <td className="p-4 text-right space-x-2">
+                    {u.status !== "verified" ? (
                       <button
-                        disabled={updatingUser === u.username}
-                        onClick={() => handleUpdateStatus(u.username, "verified")}
-                        className="rounded-lg bg-emerald-500 px-2.5 py-1 text-[11px] font-bold text-neutral-950 hover:bg-emerald-400 transition"
+                        onClick={() => handleVerify(u.username, "verified")}
+                        className="rounded-xl bg-emerald-600 hover:bg-emerald-700 px-3 py-1.5 text-xs font-bold text-white shadow-sm transition"
                       >
-                        Verify ✓
+                        ✓ Mark Verified
                       </button>
-                    )}
-                    {u.status !== "suspended" && (
+                    ) : (
                       <button
-                        disabled={updatingUser === u.username}
-                        onClick={() => handleUpdateStatus(u.username, "suspended")}
-                        className="rounded-lg border border-red-500/30 bg-red-500/10 px-2.5 py-1 text-[11px] font-semibold text-red-400 hover:bg-red-500/20 transition"
+                        onClick={() => handleVerify(u.username, "unverified")}
+                        className="rounded-xl bg-slate-100 hover:bg-rose-50 hover:text-rose-700 px-3 py-1.5 text-xs font-medium text-slate-700 transition border border-slate-200"
                       >
-                        Suspend
-                      </button>
-                    )}
-                    {u.status === "suspended" && (
-                      <button
-                        disabled={updatingUser === u.username}
-                        onClick={() => handleUpdateStatus(u.username, "verified")}
-                        className="rounded-lg border border-teal-500/30 bg-teal-500/10 px-2.5 py-1 text-[11px] font-semibold text-teal-400 hover:bg-teal-500/20 transition"
-                      >
-                        Reactivate
+                        Revoke
                       </button>
                     )}
                   </td>

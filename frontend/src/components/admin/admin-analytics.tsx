@@ -3,16 +3,15 @@
 import { useEffect, useState } from "react";
 
 interface AnalyticsData {
-  total_users: number;
-  total_owners: number;
-  total_garages: number;
-  total_bookings: number;
-  total_gross: number;
-  platform_profit: number;
-  owner_profit: number;
-  pending_garages: number;
-  pending_owners: number;
-  pending_users: number;
+  totalGrossRevenue: number;
+  totalPlatformProfit: number;
+  totalOwnerPayouts: number;
+  totalBookings: number;
+  totalUsers: number;
+  totalGarages: number;
+  unverifiedGarages: number;
+  unverifiedOwners: number;
+  totalSlots: number;
 }
 
 export function AdminAnalytics() {
@@ -41,93 +40,107 @@ export function AdminAnalytics() {
   }, []);
 
   return (
-    <div>
-      <div className="mb-6">
-        <h2 className="text-xl font-bold text-white">Platform Analytics & Financial Overview</h2>
-        <p className="text-xs text-neutral-400">
-          Executive performance summary of the Parking Lagbe platform ecosystem across Dhaka.
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-xl font-bold text-slate-900">Platform Financial & Operations Analytics</h2>
+        <p className="text-xs text-slate-500">
+          Executive performance indicators, 30% platform profit tracking, and network safety queues.
         </p>
       </div>
 
       {loading ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-32 animate-pulse rounded-2xl border border-neutral-800 bg-neutral-900/50" />
+            <div key={i} className="h-28 animate-pulse rounded-2xl border border-slate-200 bg-slate-100" />
           ))}
         </div>
       ) : (
         <div className="space-y-6">
-          {/* Top Key Metrics */}
+          {/* Top KPI Cards in White Theme */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <div className="rounded-2xl border border-neutral-800 bg-gradient-to-br from-neutral-900 to-indigo-950/30 p-5 shadow-xl">
-              <div className="text-[11px] font-semibold uppercase tracking-wider text-neutral-400">
+            {/* Platform Net Profit (30%) */}
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">
                 Platform Profit (30%)
               </div>
-              <div className="mt-2 text-3xl font-black text-indigo-400">
-                ৳{data?.platform_profit.toLocaleString()}
+              <div className="mt-1 flex items-baseline gap-1">
+                <span className="text-3xl font-black text-[#d97706]">
+                  ৳{(data?.totalPlatformProfit || 0).toFixed(0)}
+                </span>
+                <span className="text-xs text-[#d97706] font-bold">BDT</span>
               </div>
-              <p className="mt-1 text-[11px] text-neutral-500">Net revenue earned by platform.</p>
+              <p className="mt-1 text-[11px] text-slate-500">Platform commission retained</p>
             </div>
 
-            <div className="rounded-2xl border border-neutral-800 bg-neutral-900/60 p-5 shadow-xl">
-              <div className="text-[11px] font-semibold uppercase tracking-wider text-neutral-400">
-                Gross Transaction Volume
+            {/* Total Gross Platform Volume */}
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">
+                Gross Platform GMV
               </div>
-              <div className="mt-2 text-3xl font-black text-white">
-                ৳{data?.total_gross.toLocaleString()}
+              <div className="mt-1 flex items-baseline gap-1">
+                <span className="text-3xl font-black text-slate-900">
+                  ৳{(data?.totalGrossRevenue || 0).toFixed(0)}
+                </span>
+                <span className="text-xs text-slate-400 font-semibold">BDT</span>
               </div>
-              <p className="mt-1 text-[11px] text-neutral-500">
-                Across {data?.total_bookings} total customer bookings.
+              <p className="mt-1 text-[11px] text-slate-500">
+                {data?.totalBookings || 0} total bookings settled
               </p>
             </div>
 
-            <div className="rounded-2xl border border-neutral-800 bg-neutral-900/60 p-5 shadow-xl">
-              <div className="text-[11px] font-semibold uppercase tracking-wider text-neutral-400">
-                Host Payouts (70%)
+            {/* Total Host Net Payouts */}
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">
+                Total Host Payouts (70%)
               </div>
-              <div className="mt-2 text-3xl font-black text-teal-400">
-                ৳{data?.owner_profit.toLocaleString()}
+              <div className="mt-1 flex items-baseline gap-1">
+                <span className="text-3xl font-black text-emerald-600">
+                  ৳{(data?.totalOwnerPayouts || 0).toFixed(0)}
+                </span>
+                <span className="text-xs text-emerald-600 font-bold">BDT</span>
               </div>
-              <p className="mt-1 text-[11px] text-neutral-500">Disbursed to verified garage owners.</p>
+              <p className="mt-1 text-[11px] text-slate-500">Distributed to space hosts</p>
             </div>
 
-            <div className="rounded-2xl border border-neutral-800 bg-neutral-900/60 p-5 shadow-xl">
-              <div className="text-[11px] font-semibold uppercase tracking-wider text-neutral-400">
-                Garages & Spaces
+            {/* Total Registered Accounts */}
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">
+                Active Drivers & Hosts
               </div>
-              <div className="mt-2 text-3xl font-black text-amber-400">
-                {data?.total_garages}
+              <div className="mt-1 flex items-baseline gap-1">
+                <span className="text-3xl font-black text-blue-600">
+                  {data?.totalUsers || 0}
+                </span>
+                <span className="text-xs text-blue-600 font-bold">Users</span>
               </div>
-              <p className="mt-1 text-[11px] text-neutral-500">
-                {data?.pending_garages ? `${data.pending_garages} pending verification` : "All verified"}
-              </p>
+              <p className="mt-1 text-[11px] text-slate-500">Across {data?.totalGarages || 0} listed garages</p>
             </div>
           </div>
 
-          {/* Quick Ecosystem Health Badges */}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <div className="rounded-2xl border border-neutral-800 bg-neutral-900/60 p-5 shadow-xl flex items-center justify-between">
+          {/* Action Required: Verification Queues in White Theme */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-5 shadow-sm flex items-center justify-between">
               <div>
-                <div className="text-xs text-neutral-400">Registered Users</div>
-                <div className="text-2xl font-bold text-white mt-1">{data?.total_users}</div>
+                <div className="text-xs font-bold text-amber-900">Pending Host NID & License Verifications</div>
+                <p className="text-[11px] text-amber-700 mt-0.5">
+                  Hosts awaiting identity & property document approvals
+                </p>
               </div>
-              <div className="text-3xl">👥</div>
+              <div className="text-2xl font-black text-[#d97706]">
+                {data?.unverifiedOwners || 0}
+              </div>
             </div>
 
-            <div className="rounded-2xl border border-neutral-800 bg-neutral-900/60 p-5 shadow-xl flex items-center justify-between">
+            <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-5 shadow-sm flex items-center justify-between">
               <div>
-                <div className="text-xs text-neutral-400">Space Hosts & Owners</div>
-                <div className="text-2xl font-bold text-white mt-1">{data?.total_owners}</div>
+                <div className="text-xs font-bold text-amber-900">Pending Garage Safety Inspections</div>
+                <p className="text-[11px] text-amber-700 mt-0.5">
+                  Facilities waiting for compliance check before public display
+                </p>
               </div>
-              <div className="text-3xl">🏢</div>
-            </div>
-
-            <div className="rounded-2xl border border-neutral-800 bg-neutral-900/60 p-5 shadow-xl flex items-center justify-between">
-              <div>
-                <div className="text-xs text-neutral-400">Total Bookings</div>
-                <div className="text-2xl font-bold text-white mt-1">{data?.total_bookings}</div>
+              <div className="text-2xl font-black text-[#d97706]">
+                {data?.unverifiedGarages || 0}
               </div>
-              <div className="text-3xl">🎫</div>
             </div>
           </div>
         </div>
