@@ -9,6 +9,7 @@ This file is the source of truth for phase tracking. Each completed phase should
 - [x] Phase 3: Implement authentication and user/role model with Supabase Auth.
 - [x] Phase 4: Migrate regular user flows: home/search, vehicles, bookings, payments history.
 - [x] Phase 5: Migrate business owner dashboard: garages, schedules, booking management, income.
+- [x] Phase 6: Migrate admin dashboard: verification, users, garages, payments, commissions, analytics.
 - [x] Phase 7: Upload/storage migration and deployment configuration.
 - [ ] Phase 8: End-to-end verification, cleanup, and legacy PHP retirement.
 
