@@ -29,7 +29,6 @@ export function VehiclesManager() {
 
   const fetchVehicles = async () => {
     try {
-      setLoading(true);
       const res = await fetch("/api/vehicles");
       const data = await res.json();
       if (data.vehicles) {
@@ -43,7 +42,24 @@ export function VehiclesManager() {
   };
 
   useEffect(() => {
-    fetchVehicles();
+    let ignore = false;
+    async function load() {
+      try {
+        const res = await fetch("/api/vehicles");
+        const data = await res.json();
+        if (!ignore && data.vehicles) {
+          setVehicles(data.vehicles);
+        }
+      } catch {
+        // Handled
+      } finally {
+        if (!ignore) setLoading(false);
+      }
+    }
+    load();
+    return () => {
+      ignore = true;
+    };
   }, []);
 
   const handleOpenAddModal = () => {

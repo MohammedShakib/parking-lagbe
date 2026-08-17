@@ -36,7 +36,6 @@ export function BookingsList({ onRefreshStats }: BookingsListProps) {
 
   const fetchBookings = async () => {
     try {
-      setLoading(true);
       const res = await fetch("/api/bookings");
       const data = await res.json();
       if (data.bookings) {
@@ -50,7 +49,24 @@ export function BookingsList({ onRefreshStats }: BookingsListProps) {
   };
 
   useEffect(() => {
-    fetchBookings();
+    let ignore = false;
+    async function load() {
+      try {
+        const res = await fetch("/api/bookings");
+        const data = await res.json();
+        if (!ignore && data.bookings) {
+          setBookings(data.bookings);
+        }
+      } catch {
+        // Handled
+      } finally {
+        if (!ignore) setLoading(false);
+      }
+    }
+    load();
+    return () => {
+      ignore = true;
+    };
   }, []);
 
   const handleCancel = async (id: number) => {
@@ -73,7 +89,6 @@ export function BookingsList({ onRefreshStats }: BookingsListProps) {
   };
 
   const duePayments = bookings.filter((b) => b.payment_status === "pending" && b.status !== "cancelled");
-  const completedPayments = bookings.filter((b) => b.payment_status === "paid" || b.status === "completed" || b.status === "cancelled");
 
   return (
     <div className="space-y-8">
