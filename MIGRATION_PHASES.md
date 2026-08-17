@@ -8,7 +8,7 @@ This file is the source of truth for phase tracking. Each completed phase should
 - [x] Phase 2: Bootstrap Next.js/Supabase application shell.
 - [x] Phase 3: Implement authentication and user/role model with Supabase Auth.
 - [x] Phase 4: Migrate regular user flows: home/search, vehicles, bookings, payments history.
-- [ ] Phase 5: Migrate business owner dashboard: garages, schedules, booking management, income.
+- [x] Phase 5: Migrate business owner dashboard: garages, schedules, booking management, income.
 - [ ] Phase 6: Migrate admin dashboard: verification, users, garages, payments, commissions, analytics.
 - [ ] Phase 7: Upload/storage migration and deployment configuration.
 - [ ] Phase 8: End-to-end verification, cleanup, and legacy PHP retirement.
@@ -59,3 +59,12 @@ Completed:
 - Added API route handlers for garages (`/api/garages`, `/api/garages/[id]`), vehicles (`/api/vehicles`), bookings (`/api/bookings`, `/api/bookings/[id]/cancel`), payments (`/api/payments`), loyalty points (`/api/points`), ratings (`/api/ratings`), and user profiles (`/api/user/profile`).
 - Built modular driver frontend components: `GarageSearch`, `BookingModal`, `VehiclesManager`, `BookingsList`, `PaymentModal` (bKash, Nagad, Card, Points simulation with instant receipts), `PointsLedger` (Tier status and progress bar), `RatingModal`, and `ProfileEditor`.
 - Upgraded the Driver App (`/dashboard`) into an interactive hub with instant spot search, capacity gauges, vehicle management, and booking workflows.
+
+## Phase 5 Notes
+
+Completed:
+
+- Created `supabase/migrations/0004_business_owner_flows.sql` with atomic schedule & override updater `update_garage_schedule_and_status`, host check-in handler `update_host_booking_status`, and financial aggregator `get_owner_income_summary`.
+- Added host API route handlers: `/api/business/garages`, `/api/business/garages/[id]`, `/api/business/garages/[id]/schedule`, `/api/business/bookings`, `/api/business/income`, and `/api/business/reviews`.
+- Built modular host components: `GaragePortfolio`, `ScheduleControls` (24/7 toggles, operating hours, force-close with reasons), `HostBookings` (1-click driver check-in/checkout), `IncomeAnalytics` (70% net payout, 30% platform commission, today's income), and `HostReviews`.
+- Upgraded the Host Operations Portal (`/business`) into an interactive real-time management console.

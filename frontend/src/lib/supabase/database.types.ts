@@ -815,6 +815,38 @@ export interface Database {
         };
         Returns: Json;
       };
+      update_garage_schedule_and_status: {
+        Args: {
+          p_garage_id: string;
+          p_username: string;
+          p_space_name: string;
+          p_capacity: number;
+          p_price_per_hour: number;
+          p_is_24_7: boolean;
+          p_opening_time?: string | null;
+          p_closing_time?: string | null;
+          p_operating_days?: string[];
+          p_current_status?: GarageStatus;
+          p_is_manual_override?: boolean;
+          p_override_reason?: string | null;
+          p_force_closed?: boolean;
+        };
+        Returns: Json;
+      };
+      update_host_booking_status: {
+        Args: {
+          p_booking_id: number;
+          p_new_status: BookingStatus;
+          p_username: string;
+        };
+        Returns: Json;
+      };
+      get_owner_income_summary: {
+        Args: {
+          p_username: string;
+        };
+        Returns: Json;
+      };
     };
     Enums: {
       account_status: AccountStatus;
