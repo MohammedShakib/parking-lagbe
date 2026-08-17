@@ -9,7 +9,7 @@ This file is the source of truth for phase tracking. Each completed phase should
 - [x] Phase 3: Implement authentication and user/role model with Supabase Auth.
 - [x] Phase 4: Migrate regular user flows: home/search, vehicles, bookings, payments history.
 - [x] Phase 5: Migrate business owner dashboard: garages, schedules, booking management, income.
-- [ ] Phase 6: Migrate admin dashboard: verification, users, garages, payments, commissions, analytics.
+- [x] Phase 6: Migrate admin dashboard: verification, users, garages, payments, commissions, analytics.
 - [ ] Phase 7: Upload/storage migration and deployment configuration.
 - [ ] Phase 8: End-to-end verification, cleanup, and legacy PHP retirement.
 
@@ -68,3 +68,12 @@ Completed:
 - Added host API route handlers: `/api/business/garages`, `/api/business/garages/[id]`, `/api/business/garages/[id]/schedule`, `/api/business/bookings`, `/api/business/income`, and `/api/business/reviews`.
 - Built modular host components: `GaragePortfolio`, `ScheduleControls` (24/7 toggles, operating hours, force-close with reasons), `HostBookings` (1-click driver check-in/checkout), `IncomeAnalytics` (70% net payout, 30% platform commission, today's income), and `HostReviews`.
 - Upgraded the Host Operations Portal (`/business`) into an interactive real-time management console.
+
+## Phase 6 Notes
+
+Completed:
+
+- Created `supabase/migrations/0005_admin_flows.sql` with platform analytics aggregator `admin_get_analytics_summary`, entity verification handler `admin_verify_entity`, and custom host commission override function `admin_set_owner_commission`.
+- Added Admin API route handlers: `/api/admin/analytics`, `/api/admin/users`, `/api/admin/garages`, `/api/admin/owners`, and `/api/admin/payments`.
+- Built modular admin components: `AdminAnalytics` (platform profit 30%, gross volume, payouts 70%, verification counters), `AdminUsers` (user audit and verification controls), `AdminGarages` (garage approvals and safety compliance), `AdminOwners` (host verification and custom commission rate editor), and `AdminPayments` (full platform payment ledger).
+- Upgraded the Super Administrator Console (`/admin`) into a unified platform governance hub.

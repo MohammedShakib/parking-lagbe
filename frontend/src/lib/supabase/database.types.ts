@@ -847,6 +847,27 @@ export interface Database {
         };
         Returns: Json;
       };
+      admin_get_analytics_summary: {
+        Args: Record<PropertyKey, never>;
+        Returns: Json;
+      };
+      admin_verify_entity: {
+        Args: {
+          p_entity_type: string;
+          p_entity_id: string;
+          p_new_status: string;
+          p_admin_notes?: string | null;
+        };
+        Returns: Json;
+      };
+      admin_set_owner_commission: {
+        Args: {
+          p_owner_id: string;
+          p_owner_type: OwnerType;
+          p_rate: number;
+        };
+        Returns: Json;
+      };
     };
     Enums: {
       account_status: AccountStatus;
