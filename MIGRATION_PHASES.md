@@ -5,7 +5,7 @@ This file is the source of truth for phase tracking. Each completed phase should
 ## Phase Checklist
 
 - [x] Phase 1: Repository hygiene, legacy audit, and Supabase schema mapping.
-- [ ] Phase 2: Bootstrap Next.js/Supabase application shell.
+- [x] Phase 2: Bootstrap Next.js/Supabase application shell.
 - [ ] Phase 3: Implement authentication and user/role model with Supabase Auth.
 - [ ] Phase 4: Migrate regular user flows: home/search, vehicles, bookings, payments history.
 - [ ] Phase 5: Migrate business owner dashboard: garages, schedules, booking management, income.
@@ -28,3 +28,13 @@ Important migration decisions:
 - Use Supabase Auth for credentials.
 - Keep legacy business table names initially where practical to reduce mapping risk.
 - Port MySQL trigger behavior deliberately in later phases, either as Postgres triggers/RPCs or API service logic.
+
+## Phase 2 Notes
+
+Completed:
+
+- Created `frontend/` with Next.js App Router, TypeScript, Tailwind, and ESLint.
+- Installed Supabase browser/server client packages.
+- Added Supabase env example and client helper modules.
+- Added route shells for user, business, admin, login, and health check.
+- Added `backend/` notes for API/service placement.
