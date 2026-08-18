@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Search, MoreHorizontal, UserCheck, UserX, User, Settings, Check } from "lucide-react";
 
 interface AdminUserItem {
   username: string;
@@ -56,6 +57,8 @@ export function AdminUsers() {
   }, []);
 
   const handleVerify = async (username: string, status: "verified" | "unverified") => {
+    if (!window.confirm(`Are you sure you want to change verification status to ${status}?`)) return;
+    
     try {
       const res = await fetch("/api/admin/users", {
         method: "PUT",
@@ -85,105 +88,120 @@ export function AdminUsers() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold text-slate-900">User Account Management & Verification</h2>
-          <p className="text-xs text-slate-500">
-            Monitor registered driver accounts, verify identity status, and manage platform roles.
+          <h1 className="text-xl font-bold text-[#0F172A] mb-1">Users</h1>
+          <p className="text-sm text-slate-500">
+            Total {users.length} registered accounts
           </p>
         </div>
 
-        <div className="w-full sm:w-64">
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search username, email, name..."
-            className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs text-slate-900 outline-none focus:border-[#f39c12]"
-          />
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <div className="relative w-full sm:w-64">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search users..."
+              className="w-full pl-9 pr-3 py-2 bg-white border border-[#E5EAF0] text-sm text-slate-900 rounded-lg outline-none focus:border-[#149fe8]"
+            />
+          </div>
+          <button className="bg-white border border-[#E5EAF0] text-slate-700 px-3 py-2 rounded-lg text-sm font-medium hover:bg-slate-50 transition flex items-center gap-2">
+            <Settings className="w-4 h-4" />
+            Filters
+          </button>
         </div>
       </div>
 
       {loading ? (
-        <div className="h-64 rounded-3xl bg-slate-100 border border-slate-200 animate-pulse" />
-      ) : filtered.length === 0 ? (
-        <div className="rounded-3xl border border-slate-200 bg-white p-12 text-center shadow-sm">
-          <p className="text-xs text-slate-500">No user accounts found matching query.</p>
-        </div>
+        <div className="h-64 rounded-xl bg-slate-100 border border-[#E5EAF0] animate-pulse" />
       ) : (
-        <div className="overflow-x-auto rounded-3xl border border-slate-200 bg-white shadow-sm">
-          <table className="w-full text-left text-xs text-slate-800">
-            <thead className="border-b border-slate-200 bg-slate-50 uppercase text-[10px] text-slate-500 tracking-wider">
+        <div className="bg-white border border-[#E5EAF0] rounded-xl overflow-x-auto shadow-sm">
+          <table className="w-full text-left text-sm text-slate-600 min-w-[800px]">
+            <thead className="bg-[#F7F9FC] text-xs font-semibold text-slate-500 uppercase tracking-wider border-b border-[#E5EAF0]">
               <tr>
-                <th className="p-4">User & Name</th>
-                <th className="p-4">Email & Phone</th>
-                <th className="p-4">Role</th>
-                <th className="p-4">Points & Tier</th>
-                <th className="p-4">Identity Status</th>
-                <th className="p-4 text-right">Verification Action</th>
+                <th className="px-6 py-4">User</th>
+                <th className="px-6 py-4">Contact</th>
+                <th className="px-6 py-4">Role</th>
+                <th className="px-6 py-4">Loyalty</th>
+                <th className="px-6 py-4">Status</th>
+                <th className="px-6 py-4 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
-              {filtered.map((u) => (
-                <tr key={u.username} className="hover:bg-slate-50 transition">
-                  <td className="p-4">
-                    <div className="font-bold text-slate-900">
-                      {u.first_name} {u.last_name}
-                    </div>
-                    <div className="font-mono text-[11px] text-slate-500">@{u.username}</div>
-                  </td>
-
-                  <td className="p-4">
-                    <div className="text-slate-900">{u.email}</div>
-                    <div className="text-slate-500 text-[11px]">{u.phone || "No phone"}</div>
-                  </td>
-
-                  <td className="p-4">
-                    <span className="capitalize font-semibold text-slate-700">
-                      {u.role === "admin"
-                        ? "🛡️ Super Admin"
-                        : u.role === "garage_owner"
-                        ? "🏢 Space Host"
-                        : "🚗 Driver"}
-                    </span>
-                  </td>
-
-                  <td className="p-4">
-                    <div className="font-bold text-[#d97706]">{u.points} PTS</div>
-                    <span className="text-[10px] text-slate-500 capitalize">{u.user_level} VIP</span>
-                  </td>
-
-                  <td className="p-4">
-                    <span
-                      className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold border ${
-                        u.status === "verified"
-                          ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                          : "bg-amber-50 text-amber-700 border border-amber-200"
-                      }`}
-                    >
-                      {u.status.toUpperCase()}
-                    </span>
-                  </td>
-
-                  <td className="p-4 text-right space-x-2">
-                    {u.status !== "verified" ? (
-                      <button
-                        onClick={() => handleVerify(u.username, "verified")}
-                        className="rounded-xl bg-emerald-600 hover:bg-emerald-700 px-3 py-1.5 text-xs font-bold text-white shadow-sm transition"
-                      >
-                        ✓ Mark Verified
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => handleVerify(u.username, "unverified")}
-                        className="rounded-xl bg-slate-100 hover:bg-rose-50 hover:text-rose-700 px-3 py-1.5 text-xs font-medium text-slate-700 transition border border-slate-200"
-                      >
-                        Revoke
-                      </button>
-                    )}
+            <tbody className="divide-y divide-[#E5EAF0]">
+              {filtered.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-6 py-8 text-center text-slate-500">
+                    No users found matching your search.
                   </td>
                 </tr>
-              ))}
+              ) : (
+                filtered.map((u) => (
+                  <tr key={u.username} className="hover:bg-slate-50 transition">
+                    <td className="px-6 py-3">
+                      <div className="font-semibold text-slate-900">
+                        {u.first_name} {u.last_name}
+                      </div>
+                      <div className="text-[11px] text-slate-500 mt-0.5">@{u.username}</div>
+                    </td>
+
+                    <td className="px-6 py-3">
+                      <div className="text-slate-900">{u.email}</div>
+                      <div className="text-[11px] text-slate-500 mt-0.5">{u.phone || "No phone"}</div>
+                    </td>
+
+                    <td className="px-6 py-3">
+                      <div className="flex items-center gap-1.5 capitalize font-medium text-slate-700 text-[13px]">
+                        {u.role === "admin" ? <Settings className="w-3.5 h-3.5" /> : u.role === "garage_owner" ? <UserCheck className="w-3.5 h-3.5" /> : <User className="w-3.5 h-3.5" />}
+                        {u.role.replace("_", " ")}
+                      </div>
+                    </td>
+
+                    <td className="px-6 py-3">
+                      <div className="font-semibold text-slate-900">{u.points}</div>
+                      <div className="text-[11px] text-slate-500 mt-0.5 capitalize">{u.user_level}</div>
+                    </td>
+
+                    <td className="px-6 py-3">
+                      <span
+                        className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium ${
+                          u.status === "verified"
+                            ? "bg-emerald-50 text-emerald-700"
+                            : "bg-amber-50 text-amber-700"
+                        }`}
+                      >
+                        {u.status === "verified" ? "Verified" : "Pending"}
+                      </span>
+                    </td>
+
+                    <td className="px-6 py-3 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        {u.status !== "verified" ? (
+                          <button
+                            onClick={() => handleVerify(u.username, "verified")}
+                            className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded transition border border-emerald-100"
+                            title="Verify User"
+                          >
+                            <Check className="w-4 h-4" />
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleVerify(u.username, "unverified")}
+                            className="p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 rounded transition border border-transparent"
+                            title="Revoke Verification"
+                          >
+                            <UserX className="w-4 h-4" />
+                          </button>
+                        )}
+                        <button className="p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 rounded transition" title="More Options">
+                          <MoreHorizontal className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
