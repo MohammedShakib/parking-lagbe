@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { Building2, Award } from "lucide-react";
 
 import { ProfileWithAccount } from "@/lib/supabase/database.types";
 
@@ -122,15 +123,17 @@ export function AuthHeader({ profile, currentDashboard = "user" }: AuthHeaderPro
               {currentDashboard === "business" ? (
                 <Link
                   href="/dashboard"
-                  className="hidden sm:inline-flex items-center gap-1.5 rounded-xl border border-[#e7ecf1] bg-[#f6f9fc] px-3.5 py-1.5 text-xs font-bold text-[#0b1f33] transition hover:bg-slate-200/70"
+                  className="hidden sm:inline-flex items-center gap-1.5 rounded-xl border border-[#e5eaf0] bg-white px-3.5 py-1.5 text-xs font-bold text-[#0b1f33] transition hover:bg-[#f7f9fb]"
                 >
+                  <Building2 className="w-3.5 h-3.5" />
                   Switch To Driver
                 </Link>
               ) : (
                 <Link
                   href="/business"
-                  className="hidden sm:inline-flex items-center gap-1.5 rounded-xl border border-[#e7ecf1] bg-[#f6f9fc] px-3.5 py-1.5 text-xs font-bold text-[#0b1f33] transition hover:bg-slate-200/70"
+                  className="hidden sm:inline-flex items-center gap-1.5 rounded-xl border border-[#e5eaf0] bg-white px-3.5 py-1.5 text-xs font-bold text-[#0b1f33] transition hover:bg-[#f7f9fb]"
                 >
+                  <Building2 className="w-3.5 h-3.5" />
                   Switch To Host
                 </Link>
               )}
@@ -138,10 +141,10 @@ export function AuthHeader({ profile, currentDashboard = "user" }: AuthHeaderPro
               {/* Points */}
               <Link
                 href="/dashboard"
-                className="hidden sm:flex items-center gap-1.5 rounded-md border border-[#e5eaf0] bg-[#f7f9fb] px-2.5 py-1.5 text-xs font-semibold text-[#0b1f33] transition hover:border-[#149fe8]/50"
+                className="hidden sm:flex items-center gap-1.5 rounded-md border border-[#e5eaf0] bg-white px-2.5 py-1.5 text-xs font-semibold text-[#64748b] transition hover:text-[#0b1f33] hover:bg-[#f7f9fb]"
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#149fe8" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                <span>{profile.points.toLocaleString()} pts</span>
+                <Award className="w-3.5 h-3.5" />
+                <span>{profile.points.toLocaleString()} points</span>
               </Link>
 
               {/* Profile Dropdown */}
